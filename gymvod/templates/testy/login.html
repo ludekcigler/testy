@@ -1,0 +1,30 @@
+{% extends 'testy/base.html' %}
+{% block title %}
+Přihlášení &mdash; Testy
+{% endblock %}
+
+{% block content %}
+<h1>Přihlášení &mdash; Testy</h1>
+
+<hr>
+<div id="login_form">
+{% if error_message %}
+<p class="info_box error">
+    {{ error_message }}
+</p>
+{% endif %}
+
+<form action="{% url 'testy.views.user_login' %}" method="post">{% csrf_token %}
+<fieldset>
+<label for="username">Uživatelské jméno</label>
+<input type="text" id="username" name="username">
+<label for="password">Heslo</label>
+<input type="password" id="password" name="password">
+{% if continue_url %}<input type="hidden" name="continue" value="{{continue_url|urlencode}}">{% endif %}
+</fieldset>
+<fieldset>
+<button class="button_submit" id="button_login" type="submit">Přihlásit se</button>
+</fieldset>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'testy/test_form_base.html' %}
+
+{% block title %}{{ title }} &mdash; {{test.title}} {% endblock %}
+{% load testy_extras %}
+{% block content %}
+
+
+        <form name="test_form" action="{% url 'testy.views.test_add_submit' %}" method="post" class="test" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="text" name="title" value="Název testu" class="test_title">
+
+        <hr>
+
+        <p>
+            <label><input type="radio" name="test_type" value="exercise" checked>Cvičení</label>
+            <label><input type="radio" name="test_type" value="test">Písemka</label>
+        </p>
+        <textarea name="desc" class="test_description">Popis testu.</textarea>
+
+        <input type="hidden" name="num_questions" class="question_counter" value="1">
+
+        <ol class="test">
+            {% num_range 1 as questions_list %}
+            {% for q in questions_list %}
+            <li class="question">
+                <input type="hidden" name="q{{forloop.counter}}_num_responses" class="response_counter" value="3">
+                <input type="hidden" name="q{{forloop.counter}}_id" class="question_id" value="">
+                <table class="title"><tr>
+                <td class="title"><textarea name="q{{ forloop.counter }}">Otázka {{ forloop.counter }}</textarea></td>
+                <td><button class="paulund_buttons delete delete_question" type="button"></button></td></tr>
+                </table>
+
+                <label class="load_image">Nahrát nový obrázek: <input type="file" name="q{{ forloop.counter }}-image"></label>
+                <p><label class="multiple_choice"><input type="checkbox" name="q{{ forloop.counter }}-multiplechoice">Více správných odpovědí</label></p>
+                <button class="paulund_buttons add add_image" type="button">Přidat obrázek</button>
+                <ol>
+                    {% num_range 3 as responses_list %}
+                    {% for r in responses_list %}
+                    <li>
+                        <input type="hidden" name="q{{forloop.parentloop.counter}}-r{{forloop.counter}}_id" class="response_id" value="">
+                        <table><tr>
+                        <td><input type="radio" name="q{{ forloop.parentloop.counter }}-correct" value="{{ forloop.counter }}" ></td>
+                        <td class="response"><input type="text" name="q{{ forloop.parentloop.counter }}-r{{ forloop.counter }}" value="Odpověď {{ forloop.counter }}"></td>
+                        <td><button class="paulund_buttons delete" type="button"></button></td>
+                        </tr></table>
+                    </li>
+                    {% endfor %}
+                </ol>
+                <button class="paulund_buttons add add_response" type="button">Přidat odpověď</button>
+            </li>
+            {% endfor %}
+
+        </ol>
+        <p><button class="paulund_buttons add add_question" type="button">Přidat otázku</button></p>
+        
+        <hr>
+        <p class="buttons">
+            <button class="button_submit" type="submit">Uložit</button>
+        </p>
+
+
+        </form>
+
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Test &mdash; {{ test.title }}{% endblock %}
+{% load testy_extras %}
+{% block content %}
+        <h1>{{ test.title }}</h1>
+
+        <hr>
+
+        <p class="test_description">{{ test.desc }}</p>
+
+        <form name="test" action="{% url 'testy.views.solution_submit' test_url=test.get_url_key %}" id="form_test" method="post">{% csrf_token %}
+        <ol class="test">
+            {% for q in test.question_set.all|order_by:"order" %}
+            <li class="question">{{ q.text }}
+                <ol>
+                    {% if q.image %}
+                <p class="image"><a href="{{ q.image.url }}" rel="group" class="fancybox"><img src="{{ q.image.url }}" alt=""></a></p>
+                    {% endif %}
+                    {% for r in q.questionresponse_set.all|order_by:"order" %}
+                        {% if q.multiple_answers %}
+                    <li><label><input type="checkbox" name="q{{ forloop.parentloop.counter }}-r{{ forloop.counter }}" value="{{ forloop.counter }}">{{ r.text }}</label></li>
+                        {% else %}
+                    <li><label><input type="radio" name="q{{ forloop.parentloop.counter }}" value="{{ forloop.counter }}">{{ r.text }}</label></li>
+                        {% endif %}
+                    {% endfor %}
+                </ol>
+            </li>
+            {% endfor %}
+
+        </ol>
+        <hr>
+        <p id="personal_info_error">Prosím, vyplňte Vaše osobní ůdaje:</p>
+        <table id="personal_info">
+        <tr>
+            <td><label class="first_name">Vaše jméno*<br><input type="text" name="first_name" value="{{ request.user.first_name }}" required></label></td>
+            <td><label class="last_name">Příjmení*<br><input type="text" name="last_name" value="{{ request.user.last_name }}" required></label></td>
+        </tr>
+        <tr>
+            <td colspan="2"><label class="email">Email*<br><input type="email" name="email" value="{{ request.user.email }}" required></label></td>
+        </tr>
+        </table>
+        <p class="buttons">
+            <button class="button_reset" type="reset">Vymazat</button>
+            <button class="button_submit" type="submit">Odeslat</button>
+        </p>
+        
+        </form>
+{% endblock %}
+
+{% block javascripts %}
+<script type="text/javascript">
+            $("#form_test").validate({
+                showErrors: function (errorMap, errorList) {
+                    $("#personal_info label").removeClass("error");
+                    if (errorList.length > 0) {
+                        $("#personal_info_error").css("display", "block");
+                    } else {
+                        $("#personal_info_error").css("display", "none");
+                    }
+                    for (i = 0; i < errorList.length; ++i) {
+                        $(errorList[i].element).parent().addClass("error");
+                    }
+                }
+            });
+</script>
+{% endblock %}
+

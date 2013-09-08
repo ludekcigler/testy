@@ -1,0 +1,37 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Seznam řešení &mdash; {{ test.title }}{% endblock %}
+{% load staticfiles %}
+{% load humanize %}
+{% load testy_extras %}
+{% block content %}
+
+        <h1>Seznam řešení &mdash; {{ test.title }}</h1>
+
+        <hr>
+
+        {% if test.testanswer_set.all|length_is:"0" %}
+        <div style="text-align: center">
+        <p><img src="{% static "testy/img/info_icon.png" %}" width="128" height="128" alt=""></p>
+        <p>Zatím neexistují žádná řešení.</p>
+        </div>
+        {% else %}
+        <table id="solutions_list" class="items_list">
+            {% for ta in test.testanswer_set.all|order_by:"-date" %}
+            <tr>
+                <td class="user"><a href="{% url 'testy.views.solution_display' test_url=test.get_url_key solution_id=ta.id %}">{{ ta.first_name }} {{ ta.last_name }}</a></td><td class="date">{{ ta.date|naturaltime }}</td><td class="score">{% widthratio ta.get_score 1 100 %}%</td>
+                <td class="delete"><a href="{% url 'testy.views.solution_delete' test_url=test.get_url_key solution_id=ta.id %}">Smazat</a></td>
+            </tr>
+            {% endfor %}
+
+        </table>
+        {% endif %}
+
+{% endblock %}
+{% block javascripts %}
+<script type="text/javascript">
+        $(document).ready(function() {
+    	    $("#solutions_list .delete a").click(function() { return confirm('Opravdu si přejete smazat toto řešení?'); });
+     	});
+</script>
+{% endblock %}

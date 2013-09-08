@@ -1,0 +1,46 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Vyhodnocení &mdash; {{ test_answer.test.title }}{% endblock %}
+{% load staticfiles %}
+{% load testy_extras %}
+{% block content %}
+
+        <h1>Vyhodnocení &mdash; {{ test_answer.test.title }}</h1>
+        <p class="results_info"><span class="name">{{ test_answer.first_name }} {{ test_answer.last_name }}</span> <span class="date">{{ test_answer.date|date:"j. F Y" }}</span> <span class="time">{{ test_answer.date|date:"G:i" }}</span>
+
+        <hr>
+
+        <p class="test_description">{{ test_answer.test.desc }}</p>
+
+        <ol class="test results">
+            {% for qa in test_answer.questionanswer_set.all %}
+            <li class="question">{{ qa.question.text }} <span class="points">({{ qa.get_points|czech_declination:"bod,body,bodů" }})</span>
+                
+                <ol>
+                    {% for r in qa.question.questionresponse_set.all %}
+                    <li
+                    {{ qa.responses }}
+                    {% if r in qa.responses.all %}
+                        {% if r.correct %}
+                        class="right"
+                        {% else %}
+                        class="wrong"
+                        {% endif %}
+                    {% else %}
+                        {% if r.correct %}
+                        class="correct"
+                        {% endif %}
+                    {% endif %}
+                    >{{ r.text }}</li>
+                    {% endfor %}
+                </ol>
+            </li>
+            {% endfor %}
+                    <!--<li class="correct">Madrid, Barcelona, Valencia</li>
+                    <li class="wrong">Madrid, Barcelona, Malaga</li>-->
+
+        </ol>
+        <hr>
+        <p id="total_score">Celkové skóre: <span class="points">{% widthratio test_answer.get_score 1 100 %}%</span></p>
+        
+{% endblock %}

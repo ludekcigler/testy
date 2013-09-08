@@ -1,0 +1,45 @@
+
+** User **
+- username
+- fullName
+- class
+
+** Teacher **
+- username
+
+** Class **
+- id
+- name
+
+** Test **
+- id
+- title
+- desc
+- status (enabled/disabled)
+- available (date)
+- created (date)
+
+** Question **
+- id
+- test
+- text
+- picture
+- type (single/multiple)
+
+** Response **
+- id
+- question
+- text
+- correct (true/false)
+
+** TestAnswer **
+- id
+- test
+- user
+- date
+- score
+
+** QuestionAnswer **
+- testanswer
+- question
+- responses 

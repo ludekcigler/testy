@@ -1,0 +1,27 @@
+** Users **
+/users - GET: list of users (200); POST: create new user, return URL to new user (201); PUT/DELETE: not allowed (404)
+
+/users/<username> - GET: info about user; POST: not allowed (404); PUT: update user (200); DELETE: delete user (200)
+
+/users/<username>/answers - GET: list of answered tests (200); POST: submit new answer to a test (201); PUT/DELETE: 404
+
+/users/<username>/answers/<answer-id> - GET: info about the answer; POST: not allowed (404); PUT: update; DELETE: delete
+
+# Not necessary maybe
+#  /users/<username>/answers/<answer-id>/questions - GET: list of questions; POST: new response? not allowed actually
+#  /users/<username>/answers/<answer-id>/questions/<question-id>
+
+/users/<username>/tests - GET: list of tests available to the user <username>; POST/PUT/DELETE: not allowed
+
+/teachers - GET: list of teachers
+/teachers/<username> - GET: info about teacher
+
+/classes
+/classes/<class-id>
+
+/tests
+/tests/<id>
+/tests/<id>/questions
+/tests/<id>/questions/<question-id>
+/tests/<id>/questions/<question-id>/responses
+/tests/<id>/questions/<question-id>/responses/<response-id>
