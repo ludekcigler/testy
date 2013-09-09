@@ -1,0 +1,155 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}{{ title }} &mdash; {{test.title}} {% endblock %}
+{% block content %}
+{% endblock %}
+
+{% block javascripts %}
+<script type="text/javascript">
+        // Functions to make the thing work:
+        // - add response
+        
+        function add_response(aElement) {
+            // Take the first response as an HTML, count the responses so far and edit the ID and Name.
+            // If the button is "radio", use the same ID ("q<question-id>-correct"). If the button is "checkbox", use a different ID ("q<q-id>-r<r-id-correct").
+
+            var questionElem = $(aElement).closest("li.question");
+            var numResponses = $(questionElem).find("ol li").size();
+            var questionId = $(questionElem).prevAll("li").size()+1;
+
+            var responseDom = $("li.question ol li").first().clone(true);
+            $(questionElem).find(".response_counter").val("" + (numResponses+1));
+
+            update_response(responseDom, questionId, numResponses+1, true);
+            $(responseDom).find("input[type=radio]").first().removeAttr("checked");
+            $(aElement).closest("li.question").find("ol").first().append(responseDom);
+        }
+
+        function remove_response(aElement) {
+            var questionElem = $(aElement).closest("li.question");
+            var responseElem = $(aElement).closest("li");
+
+            var questionId = $(questionElem).prevAll("li").size()+1;
+            var responseId = $(responseElem).prevAll("li").size()+1;
+            var numResponses = $(questionElem).find("ol li").size();
+
+            if (numResponses > 1) {
+                // Take the following response elements and update their IDs
+                $(questionElem).find(".response_counter").val("" + (numResponses-1));
+                $(responseElem).nextAll("li").each(function (index) { update_response(this, questionId, responseId+index); });
+                $(responseElem).remove();
+            }
+
+        }
+
+        function update_response(aResponseElem, aQuestionId, aResponseId, aClearResponse) {
+            $(aResponseElem).find("input[type=radio]").first().attr("name", "q"+aQuestionId+"-correct").attr("value", aResponseId);
+            $(aResponseElem).find("input[type=checkbox]").first().attr("value", aResponseId);
+            $(aResponseElem).find("input[type=checkbox]").first().attr("name", "q"+aQuestionId+"-r"+aResponseId+"-correct");
+            $(aResponseElem).find("input.response_id[type=hidden]").first().attr("name", "q"+aQuestionId+"-r"+aResponseId+"_id");
+            if (aClearResponse) {
+                $(aResponseElem).find("input[type=text]").first().attr("value", "");
+                $(aResponseElem).find("input.response_id[type=hidden]").first().attr("value", "");
+            }
+            $(aResponseElem).find("input[type=text]").first().attr("name", "q"+aQuestionId+"-r"+aResponseId);
+        }
+
+        function add_question() {
+            var questionCount = $("li.question").size();
+
+            var questionDom = $("li.question").first().clone(true);
+            update_question(questionDom, questionCount+1, true);
+
+            // Reset to defaults:
+            // - three elements in the response
+            // - single-choice
+            var DEFAULT_NUM_RESPONSES = 3;
+            $(questionDom).find("ol li:gt("+(DEFAULT_NUM_RESPONSES-1)+")").detach();
+            $(questionDom).find(".response_counter").attr("name", "q"+(questionCount+1)+"_num_responses").val(3);
+            $(questionDom).find(".question_id").attr("name", "q"+(questionCount+1)+"_id").val("");
+            $(".question_counter").val(questionCount+1)
+            for (i = 0; i < DEFAULT_NUM_RESPONSES-$(questionDom).find("ol li").size(); ++i) {
+                add_response(questionDom);
+            }
+            $(questionDom).find("p.image").remove();
+            multiple_to_single_choice(questionDom);
+            $("ol.test").first().append(questionDom);
+        }
+
+        function remove_question(aElement) {
+            // Update the following questions
+            var questionElem = $(aElement).closest("li.question");
+            var questionId = $(questionElem).prevAll("li").size()+1;
+
+            var questionCount = $("li.question").size();
+
+            if (questionCount > 1) {
+                // Take the following response elements and update their IDs
+                $(questionElem).nextAll("li.question").each(function (index) { update_question(this, questionId+index); });
+                $(questionElem).remove();
+                $(".question_counter").val(questionCount-1)
+            }
+        }
+
+        function update_question(aQuestionElem, aQuestionId, aClearElems) {
+            $(aQuestionElem).find(".title textarea").attr("name", "q"+aQuestionId);
+            $(aQuestionElem).find(".delete_image input").attr("name", "q"+aQuestionId+"-deleteimage");
+            $(aQuestionElem).find(".load_image input").attr("name", "q"+aQuestionId+"-image");
+            $(aQuestionElem).find(".multiple_choice input").attr("name", "q"+aQuestionId+"-multiplechoice");
+            $(aQuestionElem).find(".response_counter").attr("name", "q"+aQuestionId+"_num_responses");
+            $(aQuestionElem).find(".question_id").attr("name", "q"+(aQuestionId)+"_id");
+
+            if (aClearElems) {
+                $(aQuestionElem).find(".title textarea").val("");
+                $(aQuestionElem).find(".delete_image input").val("");
+                $(aQuestionElem).find(".load_image input").val("");
+                $(aQuestionElem).find(".multiple_choice input").val("");
+            }
+
+            $(aQuestionElem).find("ol li").each(function (index) { update_response(this, aQuestionId, index+1, aClearElems); });
+        }
+
+        function single_to_multiple_choice(aQuestionElem) {
+            var questionId = $(aQuestionElem).prevAll("li").size()+1;
+
+            $(aQuestionElem).find("ol li input[type=radio]").each(function (index) {
+                $(this).attr("type", "checkbox").attr("name", "q"+questionId+"-r"+(index+1)+"-correct");
+            });
+            $(aQuestionElem).find(".multiple_choice input").prop('checked', true);
+        }
+
+        function multiple_to_single_choice(aQuestionElem) {
+            var questionId = $(aQuestionElem).prevAll("li").size()+1;
+
+            $(aQuestionElem).find("ol li input[type=checkbox]").each(function (index) {
+                $(this).attr("type", "radio").attr("name", "q"+questionId+"-correct");
+            });
+            $(aQuestionElem).find(".multiple_choice input").prop('checked', false);
+        }
+
+        function add_events() {
+            $("li.question .add_response").click(function() { add_response(this); });
+            $("li.question ol li .delete").click(function() { remove_response(this); });
+            $("li.question .multiple_choice input").change(function () { 
+                if ($(this).is(":checked")) {
+                    single_to_multiple_choice($(this).closest("li.question"));
+                } else { 
+                    multiple_to_single_choice($(this).closest("li.question")); 
+                }
+            });
+
+            $(".add_question").click(function() { add_question(); });
+            $(".delete_question").click(function() { remove_question(this); });
+        }
+
+        $(document).ready(function() {
+    	    $(".fancybox").fancybox();
+     	});
+        
+        $(document).ready(function() {
+    	    add_events();
+     	});
+
+</script>
+{% endblock %}
+

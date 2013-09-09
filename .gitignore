@@ -1,0 +1,4 @@
+*.swp
+*.pyc
+*.mp_[0-9]*
+settings_rosti_cz.py

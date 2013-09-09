@@ -1,254 +1,71 @@
-<!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>Upravit test</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width">
+{% extends 'testy/test_form_base.html' %}
 
-        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-
-        <link rel="stylesheet" href="css/normalize.css">
-        <link rel="stylesheet" href="css/main.css">
-        <link rel="stylesheet" href="test.css">
-        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
-    </head>
-
-    <body>
-        <!--[if lt IE 7]>
-            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
+{% block title %}{{ title }} &mdash; {{test.title}} {% endblock %}
+{% load testy_extras %}
+{% block content %}
 
 
-        <div id="main">
-        <div id="personal_menu">
-            <p><img src="testy_gymvod_title.png" height="28" alt="Testy Gymvod"></p>
-            <ul>
-                <li><a href="/testy/">Testy</a></li>
-                <li>|</li>
-                <li>
-                    <a href="#">Luděk Cigler ▾</a>
-                    <ul>
-                        <li><a href="/profil/">Profil</a></li>
-                        <li><a href="/logout/">Odhlásit se</a></li>
-                    </ul>
-            </ul>
-            
-        </div>
-        <div id="content"><div>
-        <!-- insert content -->
-
-        <form name="test_form" action="/testy/edit/" method="post" class="test">
-
-        <input type="text" name="title" value="Zeměpis Španělsko" class="test_title">
+        <form name="test_form" action="{% url 'testy.views.test_edit_submit' test_url=test.get_url_key %}" method="post" enctype="multipart/form-data" class="test">
+        {% csrf_token %}
+        <input type="text" name="title" value="{{ test.title }}" class="test_title">
 
         <hr>
 
         <p>
-            <label><input type="radio" name="test_type" value="exercise" checked>Cvičení</label>
-            <label><input type="radio" name="test_type" value="test">Písemka</label>
+            <label><input type="radio" name="test_type" value="exercise" {% if test.exercise %}checked{% endif %}>Cvičení</label>
+            <label><input type="radio" name="test_type" value="test" {% if test.exercise %} {% else %}checked{% endif %}>Písemka</label>
         </p>
-        <textarea name="desc" class="test_description">Desc.</textarea>
+        <textarea name="desc" class="test_description">{{ test.desc }}</textarea>
+        
+        <input type="hidden" name="num_questions" class="question_counter" value="{{ test.question_set.all|length }}">
 
         <ol class="test">
+            {% for q in test.question_set.all|order_by:"order" %}
             <li class="question">
+                <input type="hidden" name="q{{forloop.counter}}_num_responses" class="response_counter" value="{{ q.questionresponse_set.all|length }}">
+                <input type="hidden" name="q{{forloop.counter}}_id" class="question_id" value="{{q.id}}">
                 <table class="title"><tr>
-                <td class="title"><textarea name="q1">Tri nejvetsi mesta Spanelska"</textarea></td>
+                <td class="title"><textarea name="q{{ forloop.counter }}">{{ q.text }}</textarea></td>
                 <td><button class="paulund_buttons delete delete_question" type="button"></button></td></tr>
                 </table>
 
-
-                <!--<p class="image"><a href="madrid.jpg"><img src="madrid.jpg" alt=""></a></p>-->
-                <p class="image"><a href="madrid.jpg" rel="group" class="fancybox">Aktuální obrázek</a><br><label class="delete_image"><input type="checkbox" name="q1-deleteimage">Smazat obrázek</label></p>
+                {% if q.image %}
+                <p class="image"><a href="{{ q.image.url }}" rel="group" class="fancybox">Aktuální obrázek</a><br><label class="delete_image"><input type="checkbox" name="q{{ forloop.counter }}-deleteimage">Smazat obrázek</label></p>
+                {% endif %}
                 
-                <label class="load_image">Nahrát nový obrázek: <input type="file" name="q1-image"></label>
-                <p><label class="multiple_choice"><input type="checkbox" name="q1-multiplechoice">Více správných odpovědí</label></p>
+                <label class="load_image">Nahrát nový obrázek: <input type="file" name="q{{ forloop.counter }}-image"></label>
+                <p><label class="multiple_choice"><input type="checkbox" name="q{{ forloop.counter }}-multiplechoice" {% if q.multiple_answers %}checked{% endif %}>Více správných odpovědí</label></p>
                 <button class="paulund_buttons add add_image" type="button">Přidat obrázek</button>
                 <ol>
-                    <li><table><tr><td><input type="radio" name="q1-correct" value="1"></td><td class="response"><input type="text" name="q1-r1" value="Madrid, Barcelona, Sevilla"></td><td><button class="paulund_buttons delete" type="button"></button></td></tr></table></li>
-                    <li><table><tr><td><input type="radio" name="q1-correct" value="2"></td><td class="response"><input type="text" name="q1-r2" value="Madrid, Barcelona, Valencia"></td><td><button class="paulund_buttons delete" type="button"></button></td></tr></table></li>
-                    <li><table><tr><td><input type="radio" name="q1-correct" value="3"></td><td class="response"><input type="text" name="q1-r3" value="Madrid, Barcelona, Malaga"></td><td><button class="paulund_buttons delete" type="button"></button></td></tr></table></li>
+                    {% for r in q.questionresponse_set.all|order_by:"order" %}
+                    <li>
+                    
+                        <input type="hidden" name="q{{forloop.parentloop.counter}}-r{{forloop.counter}}_id" class="response_id" value="{{r.id}}">
+                        <table><tr>
+                        {% if q.multiple_answers %}
+                        <td><input type="checkbox" name="q{{ forloop.parentloop.counter }}-r{{ forloop.counter }}-correct" value="{{ forloop.counter }}" {% if r.correct %}checked{% endif %}></td>
+                        {% else %}
+                        <td><input type="radio" name="q{{ forloop.parentloop.counter }}-correct" value="{{ forloop.counter }}" {% if r.correct %}checked{% endif %}></td>
+                        {% endif %}
+                        <td class="response"><input type="text" name="q{{ forloop.parentloop.counter }}-r{{ forloop.counter }}" value="{{ r.text }}"></td>
+                        <td><button class="paulund_buttons delete" type="button"></button></td>
+                        </tr></table>
+                    </li>
+                    {% endfor %}
                 </ol>
                 <button class="paulund_buttons add add_response" type="button">Přidat odpověď</button>
             </li>
+            {% endfor %}
 
         </ol>
         <p><button class="paulund_buttons add add_question" type="button">Přidat otázku</button></p>
         
         <hr>
         <p class="buttons">
-            <button class="button_reset" type="button">Zpět</button>
             <button class="button_submit" type="submit">Uložit</button>
         </p>
 
 
         </form>
 
-        </div>
-        </div>
-
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
-        <script src="js/plugins.js"></script>
-        <script src="js/main.js"></script>
-
-        <!-- Add jQuery library -->
-        <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
-
-        <!-- jQuery Validation Plugin -->
-        <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.1/jquery.validate.min.js"></script>
-
-        <!-- Add mousewheel plugin (this is optional) -->
-        <script type="text/javascript" src="js/fancybox/lib/jquery.mousewheel-3.0.6.pack.js"></script>
-
-        <!-- Add fancyBox -->
-        <link rel="stylesheet" href="js/fancybox/source/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
-        <script type="text/javascript" src="js/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-        
-
-        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
-        <script>
-            /*var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
-            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-            g.src='//www.google-analytics.com/ga.js';
-            s.parentNode.insertBefore(g,s)}(document,'script'));*/
-        </script>
-
-        <script type="text/javascript">
-        // Functions to make the thing work:
-        // - add response
-        
-        function add_response(aElement) {
-            // Take the first response as an HTML, count the responses so far and edit the ID and Name.
-            // If the button is "radio", use the same ID ("q<question-id>-correct"). If the button is "checkbox", use a different ID ("q<q-id>-r<r-id-correct").
-
-            var numResponses = $(aElement).closest("li.question").find("ol li").size();
-            var questionId = $(aElement).closest("li.question").prevAll("li").size()+1;
-
-            var responseDom = $("li.question ol li").first().clone(true);
-            update_response(responseDom, questionId, numResponses+1, true);
-            $(aElement).closest("li.question").find("ol").first().append(responseDom);
-        }
-
-        function remove_response(aElement) {
-            var questionElem = $(aElement).closest("li.question");
-            var responseElem = $(aElement).closest("li");
-
-            var questionId = $(questionElem).prevAll("li").size()+1;
-            var responseId = $(responseElem).prevAll("li").size()+1;
-            var responseCount = $(questionElem).find("ol li").size();
-
-            if (responseCount > 1) {
-                // Take the following response elements and update their IDs
-                $(responseElem).nextAll("li").each(function (index) { update_response(this, questionId, responseId+index); });
-                $(responseElem).remove();
-            }
-
-        }
-
-        function update_response(aResponseElem, aQuestionId, aResponseId, aClearResponse) {
-            $(aResponseElem).find("input[type=radio]").first().attr("value", aResponseId);
-            $(aResponseElem).find("input[type=checkbox]").first().attr("value", aResponseId);
-            $(aResponseElem).find("input[type=checkbox]").first().attr("name", "q"+aQuestionId+"-r"+aResponseId+"-correct");
-            if (aClearResponse) {
-                $(aResponseElem).find("input[type=text]").first().attr("value", "");
-            }
-            $(aResponseElem).find("input[type=text]").first().attr("name", "q"+aQuestionId+"-r"+aResponseId);
-        }
-
-        function add_question() {
-            var questionCount = $("li.question").size();
-
-            var questionDom = $("li.question").first().clone(true);
-            update_question(questionDom, questionCount+1, true);
-
-            // Reset to defaults:
-            // - three elements in the response
-            // - single-choice
-            $(questionDom).find("ol li:gt(2)").detach();
-            for (i = 0; i < 3-$(questionDom).find("ol li"); ++i) {
-                add_response(questionDom);
-            }
-            $("ol.test").first().append(questionDom);
-        }
-
-        function remove_question(aElement) {
-            // Update the following questions
-            var questionElem = $(aElement).closest("li.question");
-            var questionId = $(questionElem).prevAll("li").size()+1;
-
-            var questionCount = $("li.question").size();
-
-            if (questionCount > 1) {
-                // Take the following response elements and update their IDs
-                $(questionElem).nextAll("li.question").each(function (index) { update_question(this, questionId+index); });
-                $(questionElem).remove();
-            }
-        }
-
-        function update_question(aQuestionElem, aQuestionId, aClearElems) {
-            $(aQuestionElem).find(".title textarea").attr("name", "q"+aQuestionId);
-            $(aQuestionElem).find(".delete_image input").attr("name", "q"+aQuestionId+"-deleteimage");
-            $(aQuestionElem).find(".load_image input").attr("name", "q"+aQuestionId+"-image");
-            $(aQuestionElem).find(".multiple_choice input").attr("name", "q"+aQuestionId+"-multiplechoice");
-
-            if (aClearElems) {
-                $(aQuestionElem).find(".title textarea").val("");
-                $(aQuestionElem).find(".delete_image input").val("");
-                $(aQuestionElem).find(".load_image input").val("");
-                $(aQuestionElem).find(".multiple_choice input").val("");
-            }
-
-            $(aQuestionElem).find("ol li").each(function (index) { update_response(this, aQuestionId, index+1, aClearElems); });
-        }
-
-        function single_to_multiple_choice(aQuestionElem) {
-            var questionId = $(aQuestionElem).prevAll("li").size()+1;
-
-            $(aQuestionElem).find("ol li input[type=radio]").each(function (index) {
-                $(this).attr("type", "checkbox").attr("name", "q"+questionId+"-r"+(index+1)+"-correct");
-            });
-        }
-
-        function multiple_to_single_choice(aQuestionElem) {
-            var questionId = $(aQuestionElem).prevAll("li").size()+1;
-
-            $(aQuestionElem).find("ol li input[type=checkbox]").each(function (index) {
-                $(this).attr("type", "radio").attr("name", "q"+questionId+"-correct");
-            });
-        }
-
-        function add_events() {
-            $("li.question .add_response").click(function() { add_response(this); });
-            $("li.question ol li .delete").click(function() { remove_response(this); });
-            $("li.question .multiple_choice input").change(function () { 
-                if ($(this).is(":checked")) {
-                    single_to_multiple_choice($(this).closest("li.question"));
-                } else { 
-                    multiple_to_single_choice($(this).closest("li.question")); 
-                }
-            });
-
-            $(".add_question").click(function() { add_question(); });
-            $(".delete_question").click(function() { remove_question(this); });
-        }
-
-        $(document).ready(function() {
-    	    $(".fancybox").fancybox();
-     	});
-        
-        $(document).ready(function() {
-    	    add_events();
-     	});
-
-        // - remove response
-        // - add question
-        // - remove question
-        </script>
-        </div>
-    </body>
-</html>
+{% endblock %}

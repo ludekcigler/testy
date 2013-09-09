@@ -226,7 +226,7 @@ def questions_add(request, test):
                 v = request.POST['q%d-r%d_id' % (q_idx, r_idx)]
                 if len(v) > 0:
                     responsesRemaining.append(int(v))
-            for r in q.questionresponse_set.all():
+            for r in q.questionresponse_set.order_by('order'):
                 if not r.id in responsesRemaining:
                     r.delete()
                     test_changed = True
@@ -283,16 +283,16 @@ def solution_submit(request, test_url):
     test_answer.save()
     num_questions = len(test.question_set.all())
     
-    for q_idx, q in enumerate(test.question_set.all()):
+    for q_idx, q in enumerate(test.question_set.order_by('order')):
         # Create a new questionAnswer object, and save the responses there
         q_answer = testy.models.QuestionAnswer(test_answer=test_answer, question=q)
         q_answer.save()
 
         if q.multiple_answers:
-            selected_responses = [r for r_idx, r in enumerate(q.questionresponse_set.all()) if request.POST.get("q%d-r%d" % (q_idx+1, r_idx+1), False)]
+            selected_responses = [r for r_idx, r in enumerate(q.questionresponse_set.order_by('order')) if request.POST.get("q%d-r%d" % (q_idx+1, r_idx+1), False)]
         else:
             if request.POST.has_key("q%s" % (q_idx+1)):
-                selected_responses = [q.questionresponse_set.all()[int(request.POST.get("q%s" % (q_idx+1), 1))-1]]
+                selected_responses = [q.questionresponse_set.order_by('order')[int(request.POST.get("q%s" % (q_idx+1), 1))-1]]
             else:
                 selected_responses = []
 

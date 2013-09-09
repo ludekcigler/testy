@@ -1,0 +1,32 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Test &mdash; {{ test.title }}{% endblock %}
+
+{% block content %}
+        <h1>{{ test.title }}</h1>
+
+        <hr>
+
+        {{ test_form }}
+
+{% endblock %}
+
+{% block javascripts %}
+<script type="text/javascript">
+            $("#form_test").validate({
+                showErrors: function (errorMap, errorList) {
+                    $("#personal_info label").removeClass("error");
+                    if (errorList.length > 0) {
+                        $("#personal_info_error").css("display", "block");
+                    } else {
+                        $("#personal_info_error").css("display", "none");
+                    }
+                    for (i = 0; i < errorList.length; ++i) {
+                        $(errorList[i].element).parent().addClass("error");
+                    }
+                }
+            });
+</script>
+{% endblock %}
+
+

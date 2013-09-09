@@ -1,0 +1,16 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Chyba &mdash; {{ error_title }}{% endblock %}
+{% load staticfiles %}
+{% block content %}
+        <h1>Chyba &mdash; {{ error_title }}</h1>
+
+        <hr>
+
+        <div style="text-align: center">
+        <p><img src="{% static "testy/img/error_icon.png" %}" width="128" height="128" alt=""></p>
+        <p>{{ error_desc }}</p>
+        </div>
+{% endblock %}
+
+

@@ -38,6 +38,9 @@ class Question(models.Model):
     def num_correct_answers(self):
         return len(self.questionresponse_set.filter(correct=True))
 
+    class Meta:
+        ordering = ['order']
+
 class QuestionResponse(models.Model):
     
     text = models.CharField(max_length=256)
@@ -47,6 +50,9 @@ class QuestionResponse(models.Model):
 
     def __unicode__(self):
         return u"%s: %s) %s%s" % (self.question.test, self.question.id, self.text, u" ✓" if self.correct else u" ✗")
+
+    class Meta:
+        ordering = ['order']
 
 class TestAnswer(models.Model):
 

@@ -1,140 +1,54 @@
-<!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>Test</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width">
+{% extends 'testy/base.html' %}
 
-        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-
-        <link rel="stylesheet" href="css/normalize.css">
-        <link rel="stylesheet" href="css/main.css">
-        <link rel="stylesheet" href="test.css">
-        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
-    </head>
-
-    <body>
-        <!--[if lt IE 7]>
-            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
-
-
-        <div id="main">
-        <div id="personal_menu">
-            <p><img src="testy_gymvod_title.png" height="28" alt="Testy Gymvod"></p>
-            <ul>
-                <li><a href="/testy/">Testy</a></li>
-                <li>|</li>
-                <li>
-                    <a href="#">Luděk Cigler ▾</a>
-                    <ul>
-                        <li><a href="/profil/">Profil</a></li>
-                        <li><a href="/logout/">Odhlásit se</a></li>
-                    </ul>
-            </ul>
-            
-        </div>
-        <div id="content">
-        <h1>Zeměpis Španělsko</h1>
+{% block title %}Test &mdash; {{ test.title }}{% endblock %}
+{% load testy_extras %}
+{% block content %}
+        <h1>{{ test.title }}</h1>
 
         <hr>
 
-        <p class="test_description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam non ante at libero vehicula eleifend nec sit amet metus. Curabitur at neque at justo suscipit congue placerat quis velit. Ut non odio vitae eros mollis cursus quis sit amet felis.</p>
+        <p class="test_description">{{ test.desc }}</p>
 
-        <form name="test" action="/testy/submit/" id="form_test" method="post">
+        <form name="test" action="{% url 'testy.views.solution_submit' test_url=test.get_url_key %}" id="form_test" method="post">{% csrf_token %}
         <ol class="test">
-            <li class="question">Tri nejvetsi mesta Spanelska
+            {% for q in test.question_set.all|order_by:"order" %}
+            <li class="question">{{ q.text }}
                 <ol>
-                    <li><label><input type="radio" name="q1" value="1">Madrid, Barcelona, Sevilla</label></li>
-                    <li><label><input type="radio" name="q1" value="2">Madrid, Barcelona, Valencia</label></li>
-                    <li><label><input type="radio" name="q1" value="3">Madrid, Barcelona, Malaga</label></li>
+                    {% if q.image %}
+                <p class="image"><a href="{{ q.image.url }}" rel="group" class="fancybox"><img src="{{ q.image.url }}" alt=""></a></p>
+                    {% endif %}
+                    {% for r in q.questionresponse_set.all|order_by:"order" %}
+                        {% if q.multiple_answers %}
+                    <li><label><input type="checkbox" name="q{{ forloop.parentloop.counter }}-r{{ forloop.counter }}" value="{{ forloop.counter }}">{{ r.text }}</label></li>
+                        {% else %}
+                    <li><label><input type="radio" name="q{{ forloop.parentloop.counter }}" value="{{ forloop.counter }}">{{ r.text }}</label></li>
+                        {% endif %}
+                    {% endfor %}
                 </ol>
             </li>
-
-            <li class="question">Rozloha Španělska?
-                <ol>
-                    <li><label><input type="radio" name="q2" value="1">504000km</label></li>
-                    <li><label><input type="radio" name="q2" value="2">604000km</label></li>
-                    <li><label><input type="radio" name="q2" value="3">704000km</label></li>
-                </ol>
-            </li>
-
-            <li class="question">Kolik obyvatel má Madrid?
-                <p class="image"><a href="madrid.jpg" rel="group" class="fancybox"><img src="madrid.jpg" alt="Madrid"></a></p>
-                <ol>
-                    <li><label><input type="radio" name="q3" value="1">2 mil</label></li>
-                    <li><label><input type="radio" name="q3" value="2">3 mil</label></li>
-                    <li><label><input type="radio" name="q3" value="3">4 mil</label></li>
-                </ol>
-            </li>
-
-            <li class="question">Které řeky tečou Španělskem?
-                <ol>
-                    <li><label><input type="checkbox" name="q3-1" value="1">Ebro</label></li>
-                    <li><label><input type="checkbox" name="q3-2" value="2">Tajo</label></li>
-                    <li><label><input type="checkbox" name="q3-3" value="3">Rhone</label></li>
-                </ol>
-            </li>
+            {% endfor %}
 
         </ol>
         <hr>
         <p id="personal_info_error">Prosím, vyplňte Vaše osobní ůdaje:</p>
         <table id="personal_info">
         <tr>
-            <td><label class="first_name">Vaše jméno*<br><input type="text" name="first_name" required></label></td>
-            <td><label class="surname">Příjmení*<br><input type="text" name="surname" required></label></td>
+            <td><label class="first_name">Vaše jméno*<br><input type="text" name="first_name" value="{{ request.user.first_name }}" required></label></td>
+            <td><label class="last_name">Příjmení*<br><input type="text" name="last_name" value="{{ request.user.last_name }}" required></label></td>
         </tr>
         <tr>
-            <td colspan="2"><label class="email">Email*<br><input type="email" name="email" required></label></td>
+            <td colspan="2"><label class="email">Email*<br><input type="email" name="email" value="{{ request.user.email }}" required></label></td>
         </tr>
         </table>
         <p class="buttons">
-            <button class="button_reset" type="reset">Vymazat</button>
             <button class="button_submit" type="submit">Odeslat</button>
         </p>
         
         </form>
-        </div>
+{% endblock %}
 
-
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
-        <script src="js/plugins.js"></script>
-        <script src="js/main.js"></script>
-
-        <!-- Add jQuery library -->
-        <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
-
-        <!-- jQuery Validation Plugin -->
-        <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.1/jquery.validate.min.js"></script>
-
-        <!-- Add mousewheel plugin (this is optional) -->
-        <script type="text/javascript" src="js/fancybox/lib/jquery.mousewheel-3.0.6.pack.js"></script>
-
-        <!-- Add fancyBox -->
-        <link rel="stylesheet" href="js/fancybox/source/jquery.fancybox.css?v=2.1.5" type="text/css" media="screen" />
-        <script type="text/javascript" src="js/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-        
-
-        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
-        <script>
-            /*var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
-            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-            g.src='//www.google-analytics.com/ga.js';
-            s.parentNode.insertBefore(g,s)}(document,'script'));*/
-        </script>
-
-        <!-- Activate FancyBox display of images -->
-        <script type="text/javascript">
-        	$(document).ready(function() {
-    		    $(".fancybox").fancybox();
-     	    });
-
+{% block javascripts %}
+<script type="text/javascript">
             $("#form_test").validate({
                 showErrors: function (errorMap, errorList) {
                     $("#personal_info label").removeClass("error");
@@ -148,7 +62,6 @@
                     }
                 }
             });
-        </script>
-        </div>
-    </body>
-</html>
+</script>
+{% endblock %}
+
