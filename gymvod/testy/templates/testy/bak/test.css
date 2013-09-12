@@ -441,3 +441,8 @@ ol.results li.question .points {
 #solutions_list .score {
     font-weight: bold;
 }
+
+/* MathJax */
+li.question div.MathJax_Display {
+    display: inline;
+}

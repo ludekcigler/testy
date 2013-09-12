@@ -455,3 +455,8 @@ ol.results li.question .points {
     width: 130px;
     margin-left: 0;
 }
+
+/* MathJax */
+li.question div.MathJax_Display {
+    display: inline;
+}
