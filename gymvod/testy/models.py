@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 import url_encoder
 import unicodedata
 
+TEST_ANSWER_URL_SALT = 943
+
 class Test(models.Model):
 
     title = models.CharField(max_length=256)
@@ -72,6 +74,13 @@ class TestAnswer(models.Model):
         """
         total_points = sum([q.get_points() for q in self.questionanswer_set.all()])
         return float(total_points)/len(self.test.question_set.all())
+
+    def get_url_key(self):
+        return url_encoder.encode_url(self.id + TEST_ANSWER_URL_SALT)
+
+    @staticmethod
+    def get_testanswer_by_url(aUrl):
+        return TestAnswer.objects.get(id=(int(url_encoder.decode_url(aUrl)) - TEST_ANSWER_URL_SALT));
 
 class QuestionAnswer(models.Model):
 

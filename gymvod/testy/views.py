@@ -17,8 +17,8 @@ import testy.forms
 
 ERROR_TEST_NOT_FOUND_TITLE = u'Test nenalezen'
 ERROR_TEST_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádnému testu v databázi.'
-ERROR_TEST_NOT_FOUND_TITLE = u'Řešení nenalezeno'
-ERROR_TEST_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádnému řešení v databázi.'
+ERROR_SOLUTION_NOT_FOUND_TITLE = u'Řešení nenalezeno'
+ERROR_SOLUTION_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádnému řešení v databázi.'
 ERROR_TEST_FORM_MISSING_DATA = u'Prosím, zadejte vaše osobní údaje.'
 ERROR_BAD_LOGIN = u'Zadali jste špatné uživatelské jméno nebo heslo.'
 
@@ -302,20 +302,19 @@ def solution_submit(request, test_url):
         q_answer.save()
 
     if test.exercise:
-        return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.solution_display', args=(test_url, test_answer.id)))
+        return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.solution_display', args=(test_url, test_answer.get_url_key())))
     else:
         t = loader.get_template('testy/test_pisemka_odeslan.html')
         c = RequestContext(request, {})
         return http.HttpResponse(t.render(c))
 
-@login_required
-def solution_display(request, test_url, solution_id):
+def solution_display(request, test_url, solution_url):
     # Display the corrected solution
     try:
         test = testy.models.Test.get_test_by_url(test_url)
-        solution = testy.models.TestAnswer.objects.get(id=solution_id)
+        solution = testy.models.TestAnswer.get_testanswer_by_url(solution_url)
     except ObjectDoesNotExist:
-        return http.HttpResponseNotFound(error_display(request, SOLUTION_NOT_FOUND_TITLE, SOLUTION_NOT_FOUND_DESC))
+        return http.HttpResponseNotFound(error_display(request, ERROR_SOLUTION_NOT_FOUND_TITLE, ERROR_SOLUTION_NOT_FOUND_DESC))
 
     template = loader.get_template('testy/vyhodnoceni.html')
     context = {'test_answer': solution}
@@ -324,10 +323,13 @@ def solution_display(request, test_url, solution_id):
 
 @never_cache
 @login_required
-def solution_delete(request, test_url, solution_id):
-    ta = testy.models.TestAnswer(id=solution_id)
+def solution_delete(request, test_url, solution_url):
+    try:
+        solution = testy.models.TestAnswer.get_testanswer_by_url(solution_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_SOLUTION_NOT_FOUND_TITLE, ERROR_SOLUTION_NOT_FOUND_DESC))
 
-    ta.delete()
+    solution.delete()
 
     return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.solution_display_all', args=(test_url,)))
 
