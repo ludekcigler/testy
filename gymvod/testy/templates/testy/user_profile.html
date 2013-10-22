@@ -1,0 +1,55 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Testy &mdash; Upravit profil{% endblock %}
+{% block content %}
+        <h1>Upravit profil</h1>
+
+        <hr>
+
+        <form name="test" action="{% url 'testy.views.user_profile_edit_submit' %}" id="form_profile" method="post">{% csrf_token %}
+        
+        <input type="hidden" name="continue_url" value="{{ request.META.HTTP_REFERER }}">
+
+        <table>
+                <tr>
+                <td><label disabled="disabled" for="username">Uživatelské jméno</label></td>
+                <td><input type="text" value="{{ request.user.username }}" disabled="disabled" name="username"></td>
+                </tr>
+
+                <tr>
+                <td><label for="firstname">Křestní jméno</label></td>
+                <td><input type="text" value="{{ request.user.first_name }}" name="firstname"></td>
+                </tr>
+
+                <tr>
+                <td><label>Příjmení</label></td>
+                <td><input type="text" value="{{ request.user.last_name }}" name="lastname"></td>
+                </tr>
+
+                <tr>
+                <td><label>Email</label></td>
+                <td><input type="text" value="{{ request.user.email }}" name="email"></td>
+                </tr>
+
+                <tr>
+                <td><label>Heslo</label></td>
+                <td><input type="password" name="password"></td>
+                </tr>
+
+                <tr>
+                <td><label>Heslo znovu</label></td>
+                <td><input type="password" name="password2"></td>
+                </tr>
+        </table>
+
+        <p><em>Pokud nechcete heslo měnit, nechte obě pole prázdná!</em></p>
+
+        <hr>
+
+        <p class="buttons">
+            <button class="button_submit" type="submit">Odeslat</button>
+        </p>
+
+        </form>
+{% endblock %}
+
