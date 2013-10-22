@@ -38,6 +38,8 @@ urlpatterns = patterns('',
     # Testy URLs
     url(r'^$', 'testy.views.index'),
     url(r'^testy/$', 'testy.views.index'),
+    url(r'^testy/profil/$', 'testy.views.user_profile_edit'),
+    url(r'^testy/profil/upravit/$', 'testy.views.user_profile_edit_submit'),
     url(r'^testy/login/$', 'testy.views.user_login'),
     url(r'^testy/logout/$', 'testy.views.user_logout'),
     url(r'^testy/novy/$', 'testy.views.test_add'),

@@ -17,9 +17,9 @@
         </div>
         {% else %}
         <table id="solutions_list" class="items_list">
-            {% for ta in test.testanswer_set.all|order_by:"-date" %}
+            {% for ta in test.testanswer_set.all|order_by:"last_name,first_name,-date" %}
             <tr>
-                <td class="user"><a href="{% url 'testy.views.solution_display' test_url=test.get_url_key solution_url=ta.get_url_key %}">{{ ta.first_name }} {{ ta.last_name }}</a></td><td class="date">{{ ta.date|naturaltime }}</td><td class="score">{% widthratio ta.get_score 1 100 %}%</td>
+                <td class="user"><a href="{% url 'testy.views.solution_display' test_url=test.get_url_key solution_url=ta.get_url_key %}">{{ ta.last_name }} {{ ta.first_name }}</a></td><td class="date">{{ ta.date|naturaltime }}</td><td class="score">{% widthratio ta.get_score 1 100 %}%</td>
                 <td class="delete"><a href="{% url 'testy.views.solution_delete' test_url=test.get_url_key solution_url=ta.get_url_key %}">Smazat</a></td>
             </tr>
             {% endfor %}

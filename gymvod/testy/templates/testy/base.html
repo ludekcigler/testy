@@ -31,7 +31,11 @@
                 <li><a href="{% url 'testy.views.index' %}">Seznam testů</a></li>
                 <li>|</li>
                 <li>
-                    <a href="{% url 'testy.views.user_logout' %}">Odhlásit se</a>
+                    <a href="#">{{ request.user.first_name }} {{ request.user.last_name }} ▾</a>
+                    <ul>
+                        <li><a href="{% url 'testy.views.user_profile_edit' %}">Upravit profil</a></li>
+                        <li><a href="{% url 'testy.views.user_logout' %}">Odhlásit se</a></li>
+                    </ul>
                 </li>
             </ul>
         {% else %}

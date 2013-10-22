@@ -21,6 +21,14 @@ ERROR_SOLUTION_NOT_FOUND_TITLE = u'Řešení nenalezeno'
 ERROR_SOLUTION_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádnému řešení v databázi.'
 ERROR_TEST_FORM_MISSING_DATA = u'Prosím, zadejte vaše osobní údaje.'
 ERROR_BAD_LOGIN = u'Zadali jste špatné uživatelské jméno nebo heslo.'
+ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE = u'Nedostatečné oprávnění'
+ERROR_TEST_NOT_EDITABLE_BY_USER_DESC = u'K úpravě tohoto testu nemáte oprávnění. Test může upravovat jenom jeho autor.'
+ERROR_USER_PROFILE_NOT_EDITABLE_TITLE = u'Přístup zakázán'
+ERROR_USER_PROFILE_NOT_EDITABLE_DESC = u'Nemůžete upravovat cizí profil.'
+ERROR_USER_PROFILE_NOT_FOUND_TITLE = u'Uživatel nenalezen'
+ERROR_USER_PROFILE_NOT_FOUND_DESC = u'Vámi hledaný uživatel v systému neexistuje'
+ERROR_PASSWORDS_DONT_MATCH_TITLE = u'Hesla nesouhlasí'
+ERROR_PASSWORDS_DONT_MATCH_DESC = u'Vámi zadaná hesla nesouhlasí. Stiskněte tlačítko prohlížeče "Zpět" a dbejte na to, abyste zadali do obou políček stejné heslo.'
 
 @decorator.decorator
 def login_required(view, *args, **kwargs):
@@ -115,11 +123,16 @@ def test_edit(request, test_url, error=None):
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
 
+    # Check if the test can be edited by the user
+    if not test.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
+
     template = loader.get_template('testy/test_form.html')
     context = {'test': test, 'error': error, 'title': 'Upravit test'}
     c = RequestContext(request, context)
     return http.HttpResponse(template.render(c))
 
+@never_cache
 @login_required
 def test_delete(request, test_url):
     # Move the test to trash
@@ -127,6 +140,9 @@ def test_delete(request, test_url):
         test = testy.models.Test.get_test_by_url(test_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
+
+    if not test.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
 
     test.deleted = True
     test.save()
@@ -145,6 +161,9 @@ def test_edit_submit(request, test_url):
         test = testy.models.Test.get_test_by_url(test_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
+
+    if not test.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
 
     test.title = request.POST['title']
     test.desc = request.POST['desc']
@@ -342,6 +361,8 @@ def solution_display_all(request, test_url):
         test = testy.models.Test.get_test_by_url(test_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
+    if not test.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
 
     template = loader.get_template('testy/seznam_reseni.html')
     context = {'test': test}
@@ -352,4 +373,42 @@ def error_display(request, error_title, error_desc):
     c = RequestContext(request, {'error_desc': error_desc, 'error_title': error_title})
     t = loader.get_template('testy/error.html')
     return t.render(c)
+
+@login_required
+def user_profile_edit(request):
+    c = RequestContext(request, {})
+    t = loader.get_template('testy/user_profile.html')
+    return http.HttpResponse(t.render(c))
+
+@login_required
+def user_profile_edit_submit(request):
+    firstname = request.POST['firstname']
+    lastname = request.POST['lastname']
+    email = request.POST['email']
+
+    password = request.POST['password']
+    password2 = request.POST['password2']
+
+    # Check if the username corresponds to request.user
+    request.user.first_name = firstname
+    request.user.last_name = lastname
+    request.user.email = email
+    request.user.save()
+
+    if password and password2 and password == password2:
+        # Change the password
+        request.user.set_password(password)
+        request.user.save()
+    elif (password or password2) and not password == password2:
+        # Display a message that the two passwords don't match
+        return http.HttpResponse(error_display(request, ERROR_PASSWORDS_DONT_MATCH_TITLE, ERROR_PASSWORDS_DONT_MATCH_DESC))
+
+    continue_url = request.POST['continue_url']
+    if continue_url:
+        return http.HttpResponseRedirect(continue_url)
+    else:
+        return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
+
+    
+
 

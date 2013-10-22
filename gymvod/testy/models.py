@@ -26,6 +26,9 @@ class Test(models.Model):
     def get_test_by_url(aUrl):
         return Test.objects.get(id=url_encoder.decode_url(aUrl));
 
+    def editable_by(self, aUser):
+        return (aUser.id == self.author.id)
+
 class Question(models.Model):
     
     text = models.TextField()
