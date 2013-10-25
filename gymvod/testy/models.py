@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 from django.db import models
+from django.db.models import signals
 from django.contrib.auth.models import User
 import url_encoder
 import unicodedata
@@ -100,4 +101,42 @@ class QuestionAnswer(models.Model):
 
     def get_points(self):
         return self.num_correct_answers()/self.question.num_correct_answers()
+
+# Default test for new users
+DEFAULT_TEST = {'title': u'Ukázkový test', 'desc': u'Popis ukázkového testu', 'exercise': True, 'deleted': False}
+
+DEFAULT_QUESTION_1 = {'text': u'Auto se rovnoměrně rozjíždí a za dobu $$15 s$$ ujede dráhu $$112,5 m$$. S jak velkým zrychlením se rozjíždí?', 'multiple_answers': True, 'order': 1}
+DEFAULT_RESPONSES_1 = [(u'0,1 $$m . s^{-2}$$', False), (u'0,5  $$m . s^{-2}$$', False), (u'0,75  $$m . s^{-2}$$', False), (u'1  $$m . s^{-2}$$', True)]
+
+DEFAULT_QUESTION_2 = {'text': u'Řidič auta se rovnoměrně rozjíždí se zrychlením $$2,5 m.s^{-2}$$. Za jakou dobu dosáhne rychlost 90 km/h?', 'multiple_answers': True, 'order': 2}
+
+DEFAULT_RESPONSES_2 = [(u'5 s', False), (u'10 s', True), (u'15 s', False), (u'20 s', False)]
+
+DEFAULT_QUESTIONS = [DEFAULT_QUESTION_1, DEFAULT_QUESTION_2]
+DEFAULT_RESPONSES = [DEFAULT_RESPONSES_1, DEFAULT_RESPONSES_2]
+
+def create_default_test(sender, **kwargs):
+    """
+    Creates a default test for a new user
+    """
+    
+    user = kwargs['instance']
+    created = kwargs['created']
+    if not created:
+        return
+
+    test = Test(author=user, title=DEFAULT_TEST['title'], desc=DEFAULT_TEST['desc'], exercise=DEFAULT_TEST['exercise'])
+    test.save()
+    # Add questions:
+
+    for q_idx in xrange(0, len(DEFAULT_QUESTIONS)):
+        question = Question(test=test, text=DEFAULT_QUESTIONS[q_idx]['text'], multiple_answers=DEFAULT_QUESTIONS[q_idx]['multiple_answers'], order=(q_idx+1))
+        question.save()
+
+        for r_idx in xrange(0, len(DEFAULT_RESPONSES[q_idx])):
+            resp_data = DEFAULT_RESPONSES[q_idx][r_idx]
+            response = QuestionResponse(question=question, text=resp_data[0], correct=resp_data[1], order=(r_idx+1))
+            response.save()
+
+signals.post_save.connect(create_default_test, sender=User, dispatch_uid='user_default_test_created')
 
