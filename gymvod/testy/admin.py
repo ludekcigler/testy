@@ -3,6 +3,7 @@ from django.contrib import admin
 import testy.models
 
 admin.site.register(testy.models.Test)
+admin.site.register(testy.models.TestFolder)
 #admin.site.register(testy.models.Question)
 #admin.site.register(testy.models.QuestionResponse)
 admin.site.register(testy.models.TestAnswer)
