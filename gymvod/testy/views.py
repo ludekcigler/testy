@@ -96,7 +96,7 @@ def test_display_all(request):
     c = RequestContext(request, context)
     return http.HttpResponse(t.render(c))
 
-def test_display(request, test_url):
+def test_display(request, test_url, error=None):
     # Display the form to submit solve a single test specified by the URL
     
     # Find the test object by URL
@@ -106,7 +106,7 @@ def test_display(request, test_url):
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
 
     template = loader.get_template('testy/test.html')
-    context = {'test': test}
+    context = {'test': test, 'error': error}
     c = RequestContext(request, context)
     return http.HttpResponse(template.render(c))
 
