@@ -6,7 +6,9 @@ from django.contrib.auth.models import User
 import url_encoder
 import unicodedata
 
+# DO NOT CHANGE THESE VALUES!!! (or the DB entries will be attributed wrongly...)
 TEST_ANSWER_URL_SALT = 943
+FOLDER_URL_SALT = 1238
 
 class Test(models.Model):
 
@@ -16,6 +18,7 @@ class Test(models.Model):
     author = models.ForeignKey(User)
     exercise = models.BooleanField(default=True)
     deleted = models.BooleanField(default=False)
+    folder = models.ForeignKey('TestFolder', blank=True, null=True)
 
     def __unicode__(self):
         return u'%s' % self.title
@@ -29,6 +32,23 @@ class Test(models.Model):
 
     def editable_by(self, aUser):
         return (aUser.id == self.author.id)
+
+class TestFolder(models.Model):
+    
+    title = models.CharField(max_length=256)
+    created = models.DateTimeField(auto_now=True)
+    author = models.ForeignKey(User)
+    deleted = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return u'%d, %s' % (self.id, self.title)
+
+    def get_url_key(self):
+        return url_encoder.encode_url(self.id + FOLDER_URL_SALT)
+
+    @staticmethod
+    def get_folder_by_url(aUrl):
+        return TestFolder.objects.get(id=(int(url_encoder.decode_url(aUrl)) - FOLDER_URL_SALT));
 
 class Question(models.Model):
     

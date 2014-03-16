@@ -17,6 +17,8 @@ import testy.forms
 
 ERROR_TEST_NOT_FOUND_TITLE = u'Test nenalezen'
 ERROR_TEST_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádnému testu v databázi.'
+ERROR_FOLDER_NOT_FOUND_TITLE = u'Složka nenalezena'
+ERROR_FOLDER_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádné složce v databázi.'
 ERROR_SOLUTION_NOT_FOUND_TITLE = u'Řešení nenalezeno'
 ERROR_SOLUTION_NOT_FOUND_DESC = u'Bohužel Vámi zadaná adresa neodpovídá žádnému řešení v databázi.'
 ERROR_TEST_FORM_MISSING_DATA = u'Prosím, zadejte vaše osobní údaje.'
@@ -83,13 +85,18 @@ def user_login(request):
 def test_display_all(request):
     # Display all tests created by a particular user
     tests = testy.models.Test.objects.filter(author=request.user, deleted=False)
+    folders = testy.models.TestFolder.objects.filter(author=request.user, deleted=False)
 
-    context = {'tests': tests}
+    context = {'tests': tests,
+        'folders': folders,
+        'page_title': (u'Testy'),
+        'page_header': (u'Seznam testů'),
+        }
     t = loader.get_template('testy/seznam_testu.html')
     c = RequestContext(request, context)
     return http.HttpResponse(t.render(c))
 
-def test_display(request, test_url):
+def test_display(request, test_url, error=None):
     # Display the form to submit solve a single test specified by the URL
     
     # Find the test object by URL
@@ -99,7 +106,7 @@ def test_display(request, test_url):
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
 
     template = loader.get_template('testy/test.html')
-    context = {'test': test}
+    context = {'test': test, 'error': error}
     c = RequestContext(request, context)
     return http.HttpResponse(template.render(c))
 
@@ -411,4 +418,76 @@ def user_profile_edit_submit(request):
 
     
 
+@login_required
+def folder_add(request):
+    error = None
+    template = loader.get_template('testy/folder_form_add.html')
+    context = {'error': error, 'title': 'Přidat složku', 'tests': testy.models.Test.objects.filter(author=request.user, deleted=False)}
+    c = RequestContext(request, context)
+    return http.HttpResponse(template.render(c))
 
+@login_required
+def folder_add_submit(request):
+    folder = testy.models.TestFolder(author=request.user)
+    folder.title = request.POST['title']
+    folder.save()
+
+    # TODO: Add code to update the selected tests with the folder
+    tests_add_to_folder(request, folder)
+
+    return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
+
+@login_required
+def folder_display(request, folder_url):
+    try:
+        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
+    
+    context = {'tests': folder.test_set.all(),
+        'folders': testy.models.TestFolder.objects.none(),
+        'page_title': (u'%s - Testy' % folder.title),
+        'page_header': (u'%s - Seznam testů' % folder.title),
+        }
+    t = loader.get_template('testy/seznam_testu.html')
+    c = RequestContext(request, context)
+    return http.HttpResponse(t.render(c))
+
+@login_required
+def folder_edit(request, folder_url):
+    try:
+        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
+    pass
+
+@login_required
+def folder_edit_submit(request, folder_url):
+    try:
+        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
+    pass
+
+@login_required
+def folder_delete(request, folder_url):
+    # Remove the folder associations from the tests in that folder? The tests become un-associated again? Yes.
+    try:
+        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
+    
+    for t in folder.test_set.all():
+        t.folder = None
+
+    folder.delete()
+    return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
+
+def tests_add_to_folder(request, folder):
+    for t in testy.models.Test.objects.all():
+        selected = request.POST.get('t%d' % t.id, False)
+        if selected:
+            t.folder = folder
+        elif t.folder == folder:
+            t.folder = None
+        t.save()
