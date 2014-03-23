@@ -15,8 +15,30 @@
             <label><input type="radio" name="test_type" value="exercise" {% if test.exercise %}checked{% endif %}>Cvičení</label>
             <label><input type="radio" name="test_type" value="test" {% if test.exercise %} {% else %}checked{% endif %}>Písemka</label>
         </p>
+
+        <p>
+            <label>
+                Složka
+                <select name="folder" class="folder">
+                    <option value=""
+                    {% if test.folder %}
+                    {% else %}
+                    selected="selected"
+                    {% endif %}
+                    >--- Žádná složka ---</option>
+                {% for folder in folders %}
+                <option value="{{ folder.id }}"
+                {% ifequal test.folder folder %}
+                selected="selected"
+                {% endifequal %}
+                >{{ folder.title }}</option>
+                {% endfor %}
+                </select>
+            </label>
+        </p>
+
         <textarea name="desc" class="test_description">{{ test.desc }}</textarea>
-        
+
         <input type="hidden" name="num_questions" class="question_counter" value="{{ test.question_set.all|length }}">
 
         <ol class="test">
@@ -32,14 +54,14 @@
                 {% if q.image %}
                 <p class="image"><a href="{{ q.image.url }}" rel="group" class="fancybox">Aktuální obrázek</a><br><label class="delete_image"><input type="checkbox" name="q{{ forloop.counter }}-deleteimage">Smazat obrázek</label></p>
                 {% endif %}
-                
+
                 <label class="load_image">Nahrát nový obrázek: <input type="file" name="q{{ forloop.counter }}-image"></label>
                 <p><label class="multiple_choice"><input type="checkbox" name="q{{ forloop.counter }}-multiplechoice" {% if q.multiple_answers %}checked{% endif %}>Více správných odpovědí</label></p>
                 <button class="paulund_buttons add add_image" type="button">Přidat obrázek</button>
                 <ol>
                     {% for r in q.questionresponse_set.all|order_by:"order" %}
                     <li>
-                    
+
                         <input type="hidden" name="q{{forloop.parentloop.counter}}-r{{forloop.counter}}_id" class="response_id" value="{{r.id}}">
                         <table><tr>
                         {% if q.multiple_answers %}
@@ -59,7 +81,7 @@
 
         </ol>
         <p><button class="paulund_buttons add add_question" type="button">Přidat otázku</button></p>
-        
+
         <hr>
         <p class="buttons">
             <button class="button_submit" type="submit">Uložit</button>

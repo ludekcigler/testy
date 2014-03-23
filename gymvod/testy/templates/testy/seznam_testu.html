@@ -14,7 +14,7 @@
         <table id="tests_list" class="items_list">
             {% for f in folders|order_by:"-created" %}
             <tr class="folder">
-                <td class="title"><a href="{% url 'testy.views.folder_display' folder_url=f.get_url_key %}">{{f.title}}</a></td><td class="date">&nbsp;</td><td class="solutions">&nbsp;</td><td class="edit"><a href="{% url 'testy.views.folder_edit' folder_url=f.get_url_key %}">Upravit</a></td><td class="delete"><a href="{% url 'testy.views.folder_delete' folder_url=f.get_url_key %}">Smazat</a></td>
+                <td class="title" colspan="3"><a href="{% url 'testy.views.folder_display' folder_url=f.get_url_key %}"><strong><em>{{f.title}} ({{ f.test_set.count|czech_declination:"test,testy,testů" }})</em></strong></a></td><td class="edit"><a href="{% url 'testy.views.folder_edit' folder_url=f.get_url_key %}">Upravit</a></td><td class="delete"><a href="{% url 'testy.views.folder_delete' folder_url=f.get_url_key %}">Smazat</a></td>
             </tr>
             {% endfor %}
             {% for t in tests|order_by:"-created" %}
@@ -29,7 +29,8 @@
 {% block javascripts %}
 <script type="text/javascript">
         $(document).ready(function() {
-    	    $("#tests_list .delete a").click(function() { return confirm('Opravdu si přejete smazat tento test?'); });
+            $("#tests_list .test .delete a").click(function() { return confirm('Opravdu si přejete smazat tento test?'); });
+            $("#tests_list .folder .delete a").click(function() { return confirm('Opravdu si přejete smazat tuto složku? Smazáním složky se nesmažou žádné Vaše testy.'); });
      	});
 </script>
 {% endblock %}
