@@ -169,7 +169,7 @@ li.question .add_response {
 
 #personal_menu ul li:hover a {
 }
-	
+
 #personal_menu ul li a {
 	display: block;
 }
@@ -179,7 +179,7 @@ li.question .add_response {
 }
 
 #personal_menu ul ul {
-	position: absolute; 
+	position: absolute;
     top: 100%;
     right: 0;
     border: 1px solid #CCC;
@@ -198,12 +198,12 @@ li.question .add_response {
 }
 
 #personal_menu ul ul li {
-	float: none; 
+	float: none;
 	position: relative;
 }
 
 #personal_menu ul ul li a {
-}	
+}
 
 #personal_menu ul ul li a:hover {
 }
@@ -223,7 +223,7 @@ li.question .add_response {
 
 /* Form fields */
 form.test input, form.test textarea {
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;    
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     font-size: 1em;
 }
 
@@ -414,7 +414,7 @@ ol.results li.question .points {
 .items_list td:before {
     padding: 0.3em;
     pointer-events: none;
-    text-align: center;    
+    text-align: center;
     font-size: 1.4em;
 }
 
@@ -454,6 +454,15 @@ ol.results li.question .points {
 #button_login {
     width: 130px;
     margin-left: 0;
+}
+
+.folder_form .folder_title {
+    width: 99%;
+    font-size: 1.2em;
+}
+
+.folder_form .tests {
+    list-style-type: none;
 }
 
 /* MathJax */

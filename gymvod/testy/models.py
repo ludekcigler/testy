@@ -34,7 +34,7 @@ class Test(models.Model):
         return (aUser.id == self.author.id)
 
 class TestFolder(models.Model):
-    
+
     title = models.CharField(max_length=256)
     created = models.DateTimeField(auto_now=True)
     author = models.ForeignKey(User)
@@ -47,11 +47,11 @@ class TestFolder(models.Model):
         return url_encoder.encode_url(self.id + FOLDER_URL_SALT)
 
     @staticmethod
-    def get_folder_by_url(aUrl):
-        return TestFolder.objects.get(id=(int(url_encoder.decode_url(aUrl)) - FOLDER_URL_SALT));
+    def get_folder_by_url(aRequest, aUrl):
+        return TestFolder.objects.get(author=aRequest.user, id=(int(url_encoder.decode_url(aUrl)) - FOLDER_URL_SALT));
 
 class Question(models.Model):
-    
+
     text = models.TextField()
     image = models.ImageField(upload_to='uploads', blank = True)
     multiple_answers = models.BooleanField()
@@ -68,7 +68,7 @@ class Question(models.Model):
         ordering = ['order']
 
 class QuestionResponse(models.Model):
-    
+
     text = models.CharField(max_length=256)
     correct = models.BooleanField()
     question = models.ForeignKey('Question')
@@ -139,7 +139,7 @@ def create_default_test(sender, **kwargs):
     """
     Creates a default test for a new user
     """
-    
+
     user = kwargs['instance']
     created = kwargs['created']
     if not created:

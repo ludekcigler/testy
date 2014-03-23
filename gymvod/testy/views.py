@@ -6,7 +6,7 @@ import urllib
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import urlresolvers
-from django import http 
+from django import http
 from django.template import loader, Context, RequestContext
 from django.views.decorators.cache import cache_control, never_cache
 import django.contrib.auth
@@ -63,7 +63,7 @@ def user_login(request):
         password = request.POST['password']
         # Try to authenticate the user
         user = django.contrib.auth.authenticate(username=username, password=password)
-    
+
         if user is not None and user.is_active:
             django.contrib.auth.login(request, user)
             if request.POST.has_key('continue'):
@@ -84,7 +84,7 @@ def user_login(request):
 @login_required
 def test_display_all(request):
     # Display all tests created by a particular user
-    tests = testy.models.Test.objects.filter(author=request.user, deleted=False)
+    tests = testy.models.Test.objects.filter(author=request.user, deleted=False, folder=None)
     folders = testy.models.TestFolder.objects.filter(author=request.user, deleted=False)
 
     context = {'tests': tests,
@@ -98,7 +98,7 @@ def test_display_all(request):
 
 def test_display(request, test_url):
     # Display the form to submit solve a single test specified by the URL
-    
+
     # Find the test object by URL
     try:
         test = testy.models.Test.get_test_by_url(test_url)
@@ -120,7 +120,7 @@ def test_display_bis(request, test_url):
     form = testy.forms.TestForm(test=test)
     c = RequestContext(request, {'test': test, 'test_form': form})
     return http.HttpResponse(template.render(c))
-    
+
 
 @login_required
 def test_edit(request, test_url, error=None):
@@ -134,8 +134,10 @@ def test_edit(request, test_url, error=None):
     if not test.editable_by(request.user):
         return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
 
+    folders = testy.models.TestFolder.objects.filter(author=request.user, deleted=False)
+
     template = loader.get_template('testy/test_form.html')
-    context = {'test': test, 'error': error, 'title': 'Upravit test'}
+    context = {'test': test, 'error': error, 'title': 'Upravit test', 'folders': folders}
     c = RequestContext(request, context)
     return http.HttpResponse(template.render(c))
 
@@ -159,7 +161,7 @@ def test_delete(request, test_url):
 @login_required
 def test_edit_submit(request, test_url):
     # Submit the edited test, then redirect to list of all tests
-    
+
     # How to update the test:
     # - edit the corresponding test object
     # - delete all questions and corresponding responses, restore them from the form again
@@ -172,11 +174,21 @@ def test_edit_submit(request, test_url):
     if not test.editable_by(request.user):
         return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
 
+    try:
+        folder_id = request.POST['folder']
+        folder = None
+        if folder_id != '':
+            folder = testy.models.TestFolder.objects.get(author=request.user, id=int(folder_id))
+
+        test.folder = folder
+    except ObjectDoesNotExist:
+        pass
+
     test.title = request.POST['title']
     test.desc = request.POST['desc']
     test.exercise = True if request.POST.get("test_type") == "exercise" else False
     test.save()
-    
+
     numQuestions = int(request.POST['num_questions'])
     # List of questions which remained after editing
     questionsRemaining = []
@@ -207,9 +219,11 @@ def test_edit_submit(request, test_url):
 def test_add(request):
     # Display an empty form for a new test
 
+    folders = testy.models.TestFolder.objects.filter(author=request.user, deleted=False)
+
     error = None
     template = loader.get_template('testy/test_form_add.html')
-    context = {'error': error, 'title': 'Přidat test'}
+    context = {'error': error, 'title': 'Přidat test', 'folders': folders}
     c = RequestContext(request, context)
     return http.HttpResponse(template.render(c))
 
@@ -231,7 +245,7 @@ def questions_add(request, test):
     test_changed = False
 
     numQuestions = int(request.POST['num_questions'])
-    
+
     for q_idx in xrange(1, numQuestions+1):
         id = request.POST['q%d_id' % q_idx]
         numResponses = int(request.POST['q%d_num_responses' % q_idx])
@@ -260,7 +274,10 @@ def questions_add(request, test):
         else:
             test_changed = True
             # Create a new question and attach it to the test
-            q = testy.models.Question(test=test, text=request.POST['q%d' % q_idx], multiple_answers=request.POST.get('q%d-multiplechoice' % q_idx, False), order=q_idx)
+            q = testy.models.Question( \
+                test=test, text=request.POST['q%d' % q_idx], \
+                multiple_answers=request.POST.get('q%d-multiplechoice' % q_idx, False), \
+                order=q_idx)
             if request.FILES.has_key('q%d-image' % q_idx):
                 q.image = request.FILES['q%d-image' % q_idx]
             q.save()
@@ -308,7 +325,7 @@ def solution_submit(request, test_url):
     test_answer = testy.models.TestAnswer(test=test, score=0.0, first_name=request.POST['first_name'], last_name=request.POST['last_name'], email=request.POST['email'])
     test_answer.save()
     num_questions = len(test.question_set.all())
-    
+
     for q_idx, q in enumerate(test.question_set.order_by('order')):
         # Create a new questionAnswer object, and save the responses there
         q_answer = testy.models.QuestionAnswer(test_answer=test_answer, question=q)
@@ -416,34 +433,33 @@ def user_profile_edit_submit(request):
     else:
         return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
 
-    
+
 
 @login_required
 def folder_add(request):
     error = None
-    template = loader.get_template('testy/folder_form_add.html')
-    context = {'error': error, 'title': 'Přidat složku', 'tests': testy.models.Test.objects.filter(author=request.user, deleted=False)}
+    template = loader.get_template('testy/folder_form.html')
+    context = {'error': error, \
+        'title': 'Přidat složku', \
+        'tests': testy.models.Test.objects.filter(author=request.user, deleted=False), \
+        'folder': {'title': u'Název složky'}, \
+        'form_action': urlresolvers.reverse('testy.views.folder_add_submit') \
+    }
     c = RequestContext(request, context)
     return http.HttpResponse(template.render(c))
 
 @login_required
 def folder_add_submit(request):
     folder = testy.models.TestFolder(author=request.user)
-    folder.title = request.POST['title']
-    folder.save()
-
-    # TODO: Add code to update the selected tests with the folder
-    tests_add_to_folder(request, folder)
-
-    return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
+    return folder_edit_from_request(request, folder)
 
 @login_required
 def folder_display(request, folder_url):
     try:
-        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+        folder = testy.models.TestFolder.get_folder_by_url(request, folder_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
-    
+
     context = {'tests': folder.test_set.all(),
         'folders': testy.models.TestFolder.objects.none(),
         'page_title': (u'%s - Testy' % folder.title),
@@ -456,35 +472,57 @@ def folder_display(request, folder_url):
 @login_required
 def folder_edit(request, folder_url):
     try:
-        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+        folder = testy.models.TestFolder.get_folder_by_url(request, folder_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
     pass
 
+    template = loader.get_template('testy/folder_form.html')
+    context = { \
+        'title': 'Upravit složku', \
+        'tests': testy.models.Test.objects.filter(author=request.user, deleted=False), \
+        'folder': folder, \
+        'form_action': urlresolvers.reverse('testy.views.folder_edit_submit', kwargs={'folder_url': folder_url}) \
+    }
+    c = RequestContext(request, context)
+    return http.HttpResponse(template.render(c))
+
 @login_required
 def folder_edit_submit(request, folder_url):
     try:
-        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+        folder = testy.models.TestFolder.get_folder_by_url(request, folder_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
     pass
+
+    return folder_edit_from_request(request, folder)
 
 @login_required
 def folder_delete(request, folder_url):
     # Remove the folder associations from the tests in that folder? The tests become un-associated again? Yes.
     try:
-        folder = testy.models.TestFolder.get_folder_by_url(folder_url)
+        folder = testy.models.TestFolder.get_folder_by_url(request, folder_url)
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
-    
+
     for t in folder.test_set.all():
         t.folder = None
+        t.save()
 
     folder.delete()
     return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
 
+def folder_edit_from_request(request, folder):
+    folder.title = request.POST['title']
+    folder.save()
+
+    # TODO: Add code to update the selected tests with the folder
+    tests_add_to_folder(request, folder)
+
+    return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
+
 def tests_add_to_folder(request, folder):
-    for t in testy.models.Test.objects.all():
+    for t in testy.models.Test.objects.filter(author=request.user, deleted=False):
         selected = request.POST.get('t%d' % t.id, False)
         if selected:
             t.folder = folder

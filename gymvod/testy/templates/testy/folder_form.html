@@ -1,0 +1,36 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+
+<hr>
+
+      <form action="{{ form_action }}" method="post" class="folder_form">
+        {% csrf_token %}
+        <input type="text" name="title" value="{{ folder.title }}" class="folder_title">
+
+        <h2>Testy v této složce</h2>
+
+        <ul class="tests">
+        {% for t in tests %}
+        <li><label>
+            <input
+                type="checkbox"
+                name="t{{ t.id }}"
+                value="{{ t.id }}"
+                {% if t in folder.test_set.all %}
+                checked="checked"
+                {% endif %}
+            >
+            {{ t.title }}
+        </label></li>
+        {% endfor %}
+        </ul>
+        <hr>
+        <p class="buttons">
+            <button class="button_submit" type="submit">Uložit</button>
+        </p>
+      </form>
+{% endblock %}
+
