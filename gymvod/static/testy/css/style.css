@@ -86,6 +86,7 @@
 
 .add:before    { content: "\271A"; color: green; }
 .edit:before   { content: "\270E"; }
+.clone:before   { content: "\2709"; }
 .delete:before { content: "\2718"; color: red; }
 .save:before   { content: "\2714";}
 /*.email:before  { content: "\2709";}/*

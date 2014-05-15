@@ -1,0 +1,13 @@
+{% extends 'testy/objekt_kopirovat.html' %}
+
+{% block title %}Kopírovat složku{% endblock %}
+
+{% block copy_title %}
+Kopírovat složku "{{ folder.title }}"
+{% endblock %}
+
+{% block form_header %}
+  <form name="test_form" action="{% url 'testy.views.folder_clone_submit' folder_url=folder.get_url_key %}" method="post" class="object_copy">
+  {% csrf_token %}
+
+{% endblock %}

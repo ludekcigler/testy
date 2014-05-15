@@ -1,0 +1,14 @@
+{% extends 'testy/objekt_kopirovat.html' %}
+
+{% block title %}Kopírovat test{% endblock %}
+
+{% block copy_title %}
+Kopírovat test {{ test.title }}
+{% endblock %}
+
+{% block form_header %}
+  <form name="test_form" action="{% url 'testy.views.test_clone_submit' test_url=test.get_url_key %}" method="post" class="object_copy">
+  {% csrf_token %}
+
+{% endblock %}
+

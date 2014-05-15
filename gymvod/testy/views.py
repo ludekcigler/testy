@@ -32,6 +32,17 @@ ERROR_USER_PROFILE_NOT_FOUND_DESC = u'Vámi hledaný uživatel v systému neexis
 ERROR_PASSWORDS_DONT_MATCH_TITLE = u'Hesla nesouhlasí'
 ERROR_PASSWORDS_DONT_MATCH_DESC = u'Vámi zadaná hesla nesouhlasí. Stiskněte tlačítko prohlížeče "Zpět" a dbejte na to, abyste zadali do obou políček stejné heslo.'
 
+ERROR_USER_DOES_NOT_EXIST_TITLE = u'Uživatelské jméno neexistuje'
+ERROR_USER_DOES_NOT_EXIST_DESC = u'Uživatel, kterému chcete test zkopírovat, neexistuje.'
+
+ERROR_USER_DOES_NOT_EXIST_TITLE = u'Uživatelské jméno neexistuje'
+ERROR_USER_DOES_NOT_EXIST_DESC = u'Uživatel, kterému chcete test zkopírovat, neexistuje.'
+ERROR_FOLDER_NOT_FOUND_TITLE = u'Složka nebyla nalezena'
+ERROR_FOLDER_NOT_FOUND_DESC = u'Složka kterou chcete zkopírovat neexistuje.'
+
+ERROR_FOLDER_NOT_EDITABLE_BY_USER_TITLE = u'Přístup zakázán'
+ERROR_FOLDER_NOT_EDITABLE_BY_USER_DESC = u'Nemáte právo kopírovat tuto složku.'
+
 @decorator.decorator
 def login_required(view, *args, **kwargs):
     if kwargs.has_key('request'):
@@ -529,3 +540,106 @@ def tests_add_to_folder(request, folder):
         elif t.folder == folder:
             t.folder = None
         t.save()
+
+@login_required
+def test_clone(request, test_url):
+    try:
+        test = testy.models.Test.get_test_by_url(test_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
+
+    if not test.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
+
+    all_users = django.contrib.auth.models.User.objects.all()
+
+    context = {'all_users': all_users, 'test': test}
+    t = loader.get_template('testy/test_kopirovat.html')
+    c = RequestContext(request, context)
+    return http.HttpResponse(t.render(c))
+
+@login_required
+def folder_clone(request, folder_url):
+    try:
+        folder = testy.models.TestFolder.get_folder_by_url(request, folder_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
+
+    if not folder.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_FOLDER_NOT_EDITABLE_BY_USER_TITLE, ERROR_FOLDER_NOT_EDITABLE_BY_USER_DESC))
+
+    all_users = django.contrib.auth.models.User.objects.all()
+
+    context = {'all_users': all_users, 'folder': folder}
+    t = loader.get_template('testy/slozka_kopirovat.html')
+    c = RequestContext(request, context)
+    return http.HttpResponse(t.render(c))
+    
+
+@login_required
+def test_clone_submit(request, test_url):
+    try:
+        test = testy.models.Test.get_test_by_url(test_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
+
+    if not test.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
+
+    try:
+      new_user = django.contrib.auth.models.User.objects.get(id=request.POST['new_user_id'])
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_USER_DOES_NOT_EXIST_TITLE, ERROR_USER_DOES_NOT_EXIST_DESC))
+
+    clone_test_to_user(test, new_user)
+    context = {'test': test, 'new_user': new_user}
+    t = loader.get_template('testy/test_zkopirovan.html')
+    c = RequestContext(request, context)
+    return http.HttpResponse(t.render(c))
+
+@login_required
+def folder_clone_submit(request, folder_url):
+    try:
+        folder = testy.models.TestFolder.get_folder_by_url(request, folder_url)
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
+
+    if not folder.editable_by(request.user):
+        return http.HttpResponseForbidden(error_display(request, ERROR_FOLDER_NOT_EDITABLE_BY_USER_TITLE, ERROR_FOLDER_NOT_EDITABLE_BY_USER_DESC))
+
+    try:
+      new_user = django.contrib.auth.models.User.objects.get(id=request.POST['new_user_id'])
+    except ObjectDoesNotExist:
+        return http.HttpResponseNotFound(error_display(request, ERROR_USER_DOES_NOT_EXIST_TITLE, ERROR_USER_DOES_NOT_EXIST_DESC))
+
+    clone_folder_to_user(folder, new_user)
+    context = {'folder': folder, 'new_user': new_user}
+    t = loader.get_template('testy/slozka_zkopirovana.html')
+    c = RequestContext(request, context)
+    return http.HttpResponse(t.render(c))
+
+def clone_folder_to_user(folder, user):
+    new_folder = testy.models.TestFolder(author=user, title=folder.title)
+    new_folder.save()
+
+    for test in folder.test_set.all():
+        clone_test_to_user(test, user, new_folder)
+
+def clone_test_to_user(test, new_user, folder=None):
+    new_test = testy.models.Test(author=new_user, title=test.title, desc=test.desc, exercise=test.exercise, folder=folder)
+
+    new_test.save()
+
+    clone_test_questions(test, new_test)
+
+def clone_test_questions(test, new_test):
+    for question in test.question_set.all():
+        new_question = testy.models.Question(test=new_test, text=question.text, image=question.image, multiple_answers=question.multiple_answers, order=question.order)
+        new_question.save()
+  
+        clone_test_question_responses(question, new_question)
+
+def clone_test_question_responses(question, new_question):
+    for response in question.questionresponse_set.all():
+        new_response = testy.models.QuestionResponse(question=new_question, text=response.text, correct=response.correct, order=response.order)
+        new_response.save()

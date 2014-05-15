@@ -1,0 +1,27 @@
+{% extends 'testy/base.html' %}
+
+{% block content %}
+{% block copy_title %}
+{% endblock %}
+
+<hr>
+
+{% block form_header %}
+{% endblock %}
+
+<label for="new_user">Vyberte uživatele: </label>
+<select name="new_user_id" id="new_user_id">
+  {% for user in all_users %}
+    <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+  {% endfor %}
+</select>
+
+<hr>
+
+<p class="buttons">
+  <button class="button_submit" type="submit">Kopírovat</button>
+</p>
+
+</form>
+
+{% endblock %}

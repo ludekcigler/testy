@@ -50,6 +50,9 @@ class TestFolder(models.Model):
     def get_folder_by_url(aRequest, aUrl):
         return TestFolder.objects.get(author=aRequest.user, id=(int(url_encoder.decode_url(aUrl)) - FOLDER_URL_SALT));
 
+    def editable_by(self, aUser):
+        return (aUser.id == self.author.id)
+
 class Question(models.Model):
 
     text = models.TextField()

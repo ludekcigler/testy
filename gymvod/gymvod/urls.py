@@ -50,6 +50,8 @@ urlpatterns = patterns('',
     url(r'^testy/slozka/(?P<folder_url>\w+)/upravit/$', 'testy.views.folder_edit'),
     url(r'^testy/slozka/(?P<folder_url>\w+)/odeslat/$', 'testy.views.folder_edit_submit'),
     url(r'^testy/slozka/(?P<folder_url>\w+)/smazat/$', 'testy.views.folder_delete'),
+    url(r'^testy/slozka/(?P<folder_url>\w+)/kopirovat/$', 'testy.views.folder_clone'),
+    url(r'^testy/slozka/(?P<folder_url>\w+)/kopirovat/odeslat/$', 'testy.views.folder_clone_submit'),
 
     url(r'^test/(?P<test_url>\w+)/$', 'testy.views.test_display'),
     url(r'^test/(?P<test_url>\w+)/bis/$', 'testy.views.test_display_bis'),
@@ -60,5 +62,7 @@ urlpatterns = patterns('',
     url(r'^test/(?P<test_url>\w+)/reseni/$', 'testy.views.solution_display_all'),
     url(r'^test/(?P<test_url>\w+)/reseni/(?P<solution_url>\w+)/$', 'testy.views.solution_display'),
     url(r'^test/(?P<test_url>\w+)/reseni/(?P<solution_url>\w+)/smazat/$', 'testy.views.solution_delete'),
+    url(r'^test/(?P<test_url>\w+)/kopirovat/$', 'testy.views.test_clone'),
+    url(r'^test/(?P<test_url>\w+)/kopirovat/odeslat/$', 'testy.views.test_clone_submit'),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

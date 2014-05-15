@@ -1,0 +1,24 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Složka zkopírována!{% endblock %}
+{% load staticfiles %}
+{% block content %}
+        <h1>Složka zkopírována!</h1>
+
+        <hr>
+
+        <div style="text-align:center">
+        <p><img src="{% static "testy/img/test_icon.png" %}" width="256" height="256" alt=""></p>
+        <p>Složka {{ folder.title }} byla úspěšně zkopírována uživateli {{ new_user.first_name }} {{ new_user.last_name }}.</p>
+        </div>
+
+        <hr>
+        <p class="buttons">
+            <form action="{% url 'testy.views.index' %}" method="GET">
+              <button class="button_submit" type="submit">Pokračovat</button>
+            </form>
+        </p>
+        
+        
+{% endblock %}
+
