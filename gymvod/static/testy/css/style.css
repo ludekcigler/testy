@@ -466,6 +466,11 @@ ol.results li.question .points {
     list-style-type: none;
 }
 
+.test_copy_input {
+    width: 99%;
+    font-size: 120%;
+}
+
 /* MathJax */
 li.question div.MathJax_Display {
     display: inline;

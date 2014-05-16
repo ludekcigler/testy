@@ -12,3 +12,8 @@ Kopírovat test {{ test.title }}
 
 {% endblock %}
 
+{% block object_name %}
+<label for="test_name">Nový název kopie testu</label><br>
+<input type="text" name="test_name" id="test_name" value="{{ test.title }}" class="test_copy_input">
+{% endblock %}
+

@@ -11,3 +11,8 @@ Kopírovat složku "{{ folder.title }}"
   {% csrf_token %}
 
 {% endblock %}
+
+{% block object_name %}
+<label for="folder_name">Nový název kopie složky</label><br>
+<input type="text" name="folder_name" id="folder_name" value="{{ folder.title }}" class="test_copy_input">
+{% endblock %}

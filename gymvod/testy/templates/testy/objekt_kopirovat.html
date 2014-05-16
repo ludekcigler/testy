@@ -10,12 +10,22 @@
 {% block form_header %}
 {% endblock %}
 
+<p>
 <label for="new_user">Vyberte uživatele: </label>
 <select name="new_user_id" id="new_user_id">
   {% for user in all_users|order_by:"last_name,first_name" %}
-    <option value="{{ user.id }}">{{ user.last_name }} {{ user.first_name }}</option>
+    <option 
+      {% ifequal user.id request.user.id %}selected="selected"{% endifequal %}
+      value="{{ user.id }}">
+      {{ user.last_name }} {{ user.first_name }}
+    </option>
   {% endfor %}
 </select>
+</p>
+<p>
+{% block object_name %}
+{% endblock %}
+</p>
 
 <hr>
 

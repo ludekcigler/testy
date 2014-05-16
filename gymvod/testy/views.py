@@ -43,6 +43,9 @@ ERROR_FOLDER_NOT_FOUND_DESC = u'Složka kterou chcete zkopírovat neexistuje.'
 ERROR_FOLDER_NOT_EDITABLE_BY_USER_TITLE = u'Přístup zakázán'
 ERROR_FOLDER_NOT_EDITABLE_BY_USER_DESC = u'Nemáte právo kopírovat tuto složku.'
 
+ERROR_TEST_DELETED_TITLE = u'Test byl smazán'
+ERROR_TEST_DELETED_DESC = u'Omlouváme se, tento test byl smazán a už jej není možno vyplnit.'
+
 @decorator.decorator
 def login_required(view, *args, **kwargs):
     if kwargs.has_key('request'):
@@ -116,6 +119,9 @@ def test_display(request, test_url, error=None):
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_TEST_NOT_FOUND_TITLE, ERROR_TEST_NOT_FOUND_DESC))
 
+    if test.deleted:
+        return http.HttpResponseNotFound(error_display(request, ERROR_TEST_DELETED_TITLE, ERROR_TEST_DELETED_DESC))
+
     template = loader.get_template('testy/test.html')
     context = {'test': test, 'error': error}
     c = RequestContext(request, context)
@@ -165,6 +171,7 @@ def test_delete(request, test_url):
         return http.HttpResponseForbidden(error_display(request, ERROR_TEST_NOT_EDITABLE_BY_USER_TITLE, ERROR_TEST_NOT_EDITABLE_BY_USER_DESC))
 
     test.deleted = True
+    test.folder = None
     test.save()
 
     return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
@@ -591,7 +598,7 @@ def test_clone_submit(request, test_url):
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_USER_DOES_NOT_EXIST_TITLE, ERROR_USER_DOES_NOT_EXIST_DESC))
 
-    clone_test_to_user(test, new_user)
+    clone_test_to_user(test, new_user, new_title=request.POST['test_name'])
     context = {'test': test, 'new_user': new_user}
     t = loader.get_template('testy/test_zkopirovan.html')
     c = RequestContext(request, context)
@@ -612,21 +619,21 @@ def folder_clone_submit(request, folder_url):
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_USER_DOES_NOT_EXIST_TITLE, ERROR_USER_DOES_NOT_EXIST_DESC))
 
-    clone_folder_to_user(folder, new_user)
+    clone_folder_to_user(folder, new_user, new_title=request.POST['folder_name'])
     context = {'folder': folder, 'new_user': new_user}
     t = loader.get_template('testy/slozka_zkopirovana.html')
     c = RequestContext(request, context)
     return http.HttpResponse(t.render(c))
 
-def clone_folder_to_user(folder, user):
-    new_folder = testy.models.TestFolder(author=user, title=folder.title)
+def clone_folder_to_user(folder, user, new_title=None):
+    new_folder = testy.models.TestFolder(author=user, title=(new_title or folder.title))
     new_folder.save()
 
     for test in folder.test_set.all():
         clone_test_to_user(test, user, new_folder)
 
-def clone_test_to_user(test, new_user, folder=None):
-    new_test = testy.models.Test(author=new_user, title=test.title, desc=test.desc, exercise=test.exercise, folder=folder)
+def clone_test_to_user(test, new_user, folder=None, new_title=None):
+    new_test = testy.models.Test(author=new_user, title=(new_title or test.title), desc=test.desc, exercise=test.exercise, folder=folder)
 
     new_test.save()
 
