@@ -1,0 +1,41 @@
+{% extends 'testy/base.html' %}
+
+{% block title %}Nástěnka{% endblock %}
+{% load testy_extras %}
+{% load humanize %}
+{% block content %}
+<h1>Nástěnka</h1>
+
+<table id="total_statistics">
+<tr><td>Počet uživatelů</td><td>{{ total_users }}</td></tr>
+<tr><td>Počet testů</td><td>{{ total_tests }}</td></tr>
+<tr><td>Počet složek</td><td>{{ total_folders }}</td></tr>
+<tr><td>Počet řešení</td><td>{{ total_solutions }}</td></tr>
+<tr><td>Počet řešení za poslední měsíc</td><td>{{ total_solutions }}</td></tr>
+</table>
+
+<h2>Aktivní uživatelé</h2>
+<table id="most_active_users">
+  <thead>
+  <tr>
+    <th class="order">&nbsp;</th>
+    <th class="name">Jméno</th>
+    <th class="tests">Testy</th>
+    <th class="folders">Složky</th>
+    <th class="solutions">Řešení</th>
+  </tr>
+  </thead>
+  <tbody>
+{% for user in top_users %}
+  <tr>
+    <td class="order">{{ forloop.counter }}.</td>
+    <td class="name">{{ user.first_name }} {{ user.last_name }}</td>
+    <td class="tests">{{ user.tests }}</td>
+    <td class="folders">{{ user.folders }}</td>
+    <td class="solutions">{{ user.solutions }}</td>
+  </tr>
+{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

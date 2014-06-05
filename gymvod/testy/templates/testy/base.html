@@ -28,6 +28,10 @@
             <p><img src="{% static "testy/img/testy_gymvod_title.png" %}" height="28" alt="Testy Gymvod"></p>
         {% if request.user and request.user.is_authenticated %}
             <ul>
+                {% if request.user and request.user.is_staff %}
+                <li><a href="{% url 'testy.views.system_dashboard' %}">Nástěnka</a></li>
+                <li>|</li>
+                {% endif %}
                 <li><a href="{% url 'testy.views.index' %}">Seznam testů</a></li>
                 <li>|</li>
                 <li>

@@ -59,6 +59,18 @@ def login_required(view, *args, **kwargs):
     else:
         return view(*args, **kwargs)
 
+@decorator.decorator
+def staff_login_required(view, *args, **kwargs):
+    if kwargs.has_key('request'):
+        request = kwargs['request']
+    else:
+        request = args[0]
+
+    if not request.user or not request.user.is_authenticated() or not request.user.is_staff:
+        return http.HttpResponseRedirect(urlresolvers.reverse('testy.views.index'))
+    else:
+        return view(*args, **kwargs)
+
 @login_required
 def index(request):
     return test_display_all(request)
@@ -478,7 +490,7 @@ def folder_display(request, folder_url):
     except ObjectDoesNotExist:
         return http.HttpResponseNotFound(error_display(request, ERROR_FOLDER_NOT_FOUND_TITLE, ERROR_FOLDER_NOT_FOUND_DESC))
 
-    context = {'tests': folder.test_set.all(),
+    context = {'tests': folder.test_set.filter(deleted=False),
         'folders': testy.models.TestFolder.objects.none(),
         'page_title': (u'%s - Testy' % folder.title),
         'page_header': (u'%s - Seznam testů' % folder.title),
@@ -650,3 +662,34 @@ def clone_test_question_responses(question, new_question):
     for response in question.questionresponse_set.all():
         new_response = testy.models.QuestionResponse(question=new_question, text=response.text, correct=response.correct, order=response.order)
         new_response.save()
+
+
+@staff_login_required
+def system_dashboard(request):
+    total_users = django.contrib.auth.models.User.objects.all().count()
+    total_tests = testy.models.Test.objects.all().count()
+    total_folders = testy.models.TestFolder.objects.all().count()
+    total_solutions = testy.models.TestAnswer.objects.all().count()
+    last_30days_solutions = testy.models.TestAnswer.objects.filter(date__gt=(datetime.date.today() - datetime.timedelta(days=30))).count()
+
+    top_users = []
+    for user in django.contrib.auth.models.User.objects.all():
+      user_count = {'first_name': user.first_name, 'last_name': user.last_name, 'tests': user.test_set.filter(deleted=False).count(), 'folders': user.testfolder_set.filter(deleted=False).count()}
+
+      if user_count['tests'] <= 0:
+          continue
+
+      user_solutions = testy.models.TestAnswer.objects.filter(test__author__id=user.id, test__deleted=False).count()
+      user_count['solutions'] = user_solutions
+
+      top_users.append(user_count)
+
+    top_users.sort(lambda u1, u2: -cmp(u1['tests'], u2['tests']))
+
+    context = {'total_users': total_users, 'total_tests': total_tests, 'total_folders': total_folders, 'total_solutions': total_solutions, 'last_30days_solutions': last_30days_solutions, 'top_users': top_users}
+    t = loader.get_template('testy/dashboard.html')
+    c = RequestContext(request, context)
+    return http.HttpResponse(t.render(c))
+
+
+

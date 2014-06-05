@@ -53,6 +53,9 @@ class TestFolder(models.Model):
     def editable_by(self, aUser):
         return (aUser.id == self.author.id)
 
+    def test_count(self):
+        return self.test_set.filter(deleted=False).count()
+
 class Question(models.Model):
 
     text = models.TextField()

@@ -475,3 +475,26 @@ ol.results li.question .points {
 li.question div.MathJax_Display {
     display: inline;
 }
+
+/* System Dashboard */
+#total_statistics {
+  min-width: 50%;
+}
+
+#most_active_users {
+  width: 100%;
+}
+
+#most_active_users .tests, #most_active_users .folders, #most_active_users .solutions {
+  text-align: right;
+  width: 15%;
+}
+
+#most_active_users .name {
+  text-align: left;
+}
+
+#most_active_users .order {
+  width: 1%;
+  padding-right: 1em;
+}
