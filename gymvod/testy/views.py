@@ -91,6 +91,11 @@ def user_login(request):
         user = django.contrib.auth.authenticate(username=username, password=password)
 
         if user is not None and user.is_active:
+            if not request.POST.get('save_session', False):
+                request.session.set_expiry(0) # Do not save the session
+            else:
+                request.session.set_expiry(None) # Revert to default
+
             django.contrib.auth.login(request, user)
             if request.POST.has_key('continue'):
                 return http.HttpResponseRedirect(request.POST['continue'])
@@ -593,7 +598,7 @@ def folder_clone(request, folder_url):
     t = loader.get_template('testy/slozka_kopirovat.html')
     c = RequestContext(request, context)
     return http.HttpResponse(t.render(c))
-    
+
 
 @login_required
 def test_clone_submit(request, test_url):
@@ -655,7 +660,7 @@ def clone_test_questions(test, new_test):
     for question in test.question_set.all():
         new_question = testy.models.Question(test=new_test, text=question.text, image=question.image, multiple_answers=question.multiple_answers, order=question.order)
         new_question.save()
-  
+
         clone_test_question_responses(question, new_question)
 
 def clone_test_question_responses(question, new_question):
@@ -690,6 +695,3 @@ def system_dashboard(request):
     t = loader.get_template('testy/dashboard.html')
     c = RequestContext(request, context)
     return http.HttpResponse(t.render(c))
-
-
-

@@ -20,6 +20,8 @@ Přihlášení &mdash; Testy
 <input type="text" id="username" name="username">
 <label for="password">Heslo</label>
 <input type="password" id="password" name="password">
+<input type="checkbox" id="save_session" name="save_session">
+<label for="save_session">Zůstat přihlášen(a)</label>
 {% if continue_url %}<input type="hidden" name="continue" value="{{continue_url|urlencode}}">{% endif %}
 </fieldset>
 <fieldset>
